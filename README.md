@@ -1,0 +1,452 @@
+# Adaptive 独立副本：实际 1–3 路山体提取
+
+本仓库基于 [372342890/ComfyUI-MidFar-Extract](https://github.com/372342890/ComfyUI-MidFar-Extract) 的 MIT 源码复制改进，保留原 LICENSE 与历史节点。新工作流为 `midfar-adaptive.byteartist.json`，仅包含原图识别、独立 PE、提取与查重，不含面数分析或 3D。
+
+复制来源版本：`17ac4195daa2e81af141744e929aa493e34746e0`。本次完整回归 **305 项通过**，验证范围与云端验收边界见 `docs/adaptive-validation.md`。
+
+新节点键为 `BAMidFarAdaptivePE`、`BAMidFarActivePrompt`、`BAMidFarAdaptivePNG`。按实际数量输出：两个目标生成两张，一目标生成一张；没有合格目标则明确报错并停止。分路保留八个原输出槽，但缺少的尾部 prompt/prefix 是空字符串，不虚构目标或生成占位图。有效 prefix 必须从第 1 路连续排列且不重复。
+
+每条图片模型的 prompt 前都有空路门控，空 prompt 返回 ComfyUI `ExecutionBlocker(None)`；末端三个 IMAGE 输入标为 `lazy`，仅请求有效 prefix 对应的图片，缺失的返回 IMAGE 槽也使用 blocker。需要运行环境支持 `comfy_execution.graph.ExecutionBlocker` 与 lazy 输入协议；仅替换分路节点无法让旧的“三张图片必需”末端兼容两目标，须使用新图中的门控与末端。
+
+识别、PE 和提取规则位于 `adaptive-recognition.txt`、`adaptive-pe.txt`、`adaptive-image.txt`。保留原图真实尖峰/钝顶、岩肩、平台、岩阶和连接段；文字描述错误时以原图事实校正，保持同一 id/unit_id 与自然组身份。清理覆盖物只作小范围岩土接续，不圆丘化、不切成散石、不拼无关邻山。无底色要求时原始 RGB/RGBA 像素保持不变；查重额外拒绝精确镜像重复。
+
+安装：将本插件目录放入 ComfyUI `custom_nodes/`，在宿主 Python 环境安装 `requirements.txt` 并重启服务，再导入新工作流。若旧插件同时安装，务必选择上述唯一的 Adaptive 节点键。私有 GitHub 仓库需要宿主具备读取权限，不能把访问令牌嵌入 URL。ByteArtist 云端是否开放安装须按实际 Manager 界面确认，本地测试通过不等于云端已加载。
+
+导出：`python adaptive_workflow.py`。验证：`python -m unittest discover -v`。在 ByteArtist 中先核验识别与 PE，再逐节点运行提取链路；不要运行原房间下游的面数/3D。图中的 `026.png` 是输入文件名，导入后需选择当前原图。
+
+## 原项目使用说明
+
+# ComfyUI MidFar Extract
+
+通用的中景 / 远景**单个物体**提取、软边抠图及透明裁切节点。建筑、树、独立山体等按照参考图识别结果逐个处理，没有固定景物名单，不需要下载额外分割模型。旧版整层节点仍保留兼容。
+
+## 推荐：单张图片自动生成三个 GLB（9 节点）
+
+导入 `midfar-compact.byteartist.json`，仅在第一个图片节点上传一张参考图，
+点击“全局运行”。画布共 9 个真实节点、25 条连接：一个上传、一个自动提取、
+一个共享混元 3D 模型、三路生成和三路 GLB 导出。
+
+自动提取节点调用已安装的原生 `BALLMText` / `BALLMImage`，使用原有豆包视觉、
+Seedream 5.0 pro、2048×2048、无水印参数。所有裁图、定位图、审查图和上一版
+结果在内部自动传递，无须用户反复选图，也不展开或折叠旧的 113 节点图。
+每份素材通过数值与视觉检查后立即停止；只有失败的素材才修正，最多两次。
+最快只需三次生图；实际次数与所有原始审查记录保存在输出目录的 `_run.json`。
+
+通过后输出三张 RGBA PNG 和三个带嵌入贴图的 GLB。原图不足三个安全目标、
+服务调用失败或三版均未通过时明确报错，保留实际诊断，不用不合格素材补数量。
+GLB 使用现有原生混元 3D 2.0 体积生成；侧背颜色由正面贴图延伸，保留现有网格拓扑。
+
+## 一次运行输出三份完整中远景素材
+
+使用根目录 `midfar-three-autonomous.byteartist.json`。安装本仓库并重启后，
+粘贴导入整个 JSON，在第一个 LoadImage 换参考图，
+点击一次“全局运行”。分析、选材、生成、检查和修正都在这一个工作流内，
+不需要再次导入展开结果。所有图片节点固定使用 **Seedream 5.0 pro**，
+2048×2048、PNG、关闭水印。视觉判断分成候选分析、交叉复核和逐版审查，
+按阶段限制 JSON 回复长度，避免原生文本 carrier 长思考超过服务时限；
+图像生成使用标准提示模式。
+
+流程：原图 → 多候选分析 → 原图边界硬过滤与真实局部图表 →
+视觉复核三份不同完整单元 → 三个独立生成分支 →
+每份初稿、两轮自动审查修正 → 选择合格 RGBA → 三张透明 PNG。
+这是一次工作流任务，内部共九次图片模型调用和十四次视觉文本调用，
+会比只生成三张初稿耗时更多。最终只保存三张合格素材。
+
+保留真实相连峰、侧柱、共享岩台和自然岩基；二维重叠、相邻雪地或覆草
+不能作为物体连接的证据。排除草堆、树林、湖水和地面风景条，
+保留山体自身覆草覆雪。候选接触原图边界或已经裁断会被淘汰，
+不能通过向内缩 bbox 恢复资格。遮挡处只重建该目标自身的短自然山脚。
+所有目标和提示由当前图的原生视觉模型产生，没有按文件名指定素材。
+自动兼容模型的0–1比例框和0–1000整数框，保留原始坐标证据；
+混合单位的错误框仍被拒绝，归一化不会放宽源边界安全检查。
+
+新增节点：`BAMidFarCandidateReview`、`BAMidFarThreePlans`、
+`BAMidFarAutonomousReference`、`BAMidFarAssetInspect`、
+`BAMidFarRepairPrompt`、`BAMidFarChooseAsset`。
+三份计划是三个独立 STRING 槽，不使用 ByteArtist 不支持的动态列表映射。
+自定义节点不执行模型请求，不保存密钥，也不依赖私有服务 SDK。
+
+最终选择同时要求数值检查通过、七个语义布尔项全部为真且评分至少85。
+缺峰、断底、遗漏相连部件、混入无关物体、风格不符、背景不干净、
+贴画布边缘或多主体都会失败。检查阶段返回缺陷供模型纠错；
+同一分支三版均未通过时明确报错，不能用不完整图凑三张。
+生成模型和视觉审查仍会出错；这些检查不能保证任意输入绝对成功。
+原图不足三个安全完整目标时同样明确失败。
+
+```sh
+python -m unittest discover -v
+```
+
+## Selected connected mid/far assets
+
+For reusable natural scenery, use the selected-assets nodes:
+
+`Current image → vision selection JSON → BAMidFarSelectionExpand → save/import exported JSON → independent cropped-reference carriers → BAMidFarSelectedMatte → PNG`
+
+The selector takes at most 2 or 3 suitable rocks, hills or mountains. Connected pillars,
+cap rocks and peaks sharing a natural base are **one complete asset**, not separate
+targets. Grass tufts and scattering details are excluded in this mode; a hill keeps
+its own grass cover. The older instance and terrain-generation modes remain available.
+
+Each selection has `id`, `unit_id`, `name`, `kind` (`rock/hill/mountain`), `layer`
+(`midground/background`), `location`, `appearance`, `occlusion`, normalized `bbox`,
+`asset_unit` (`connected_formation/independent`), `connected_parts`, `selection_reason`,
+`priority` (0–100), and `is_single:true`. Parts with the same `unit_id` are merged
+before ranking; overlapping boxes alone do not merge separate objects. Available
+mid/far layers are both covered before taking the next highest-priority unit.
+Fewer than two suitable targets are reported instead of invented.
+
+`BAMidFarSelectedAsset` accepts exactly one target plus the current image. Its
+`reference_crop` is the corresponding bbox crop without rescaling; connect both
+`prompt` and `reference_crop` to the same image editor. This avoids neighboring
+large formations replacing smaller targets. Changed images require a fresh plan.
+Keep the prompt node's key and filename connected to `BAMidFarSelectedMatte`.
+
+The matte uses the observed background color, including tinted/compressed green,
+magenta or blue screens, to solve soft Alpha and recover boundary colors.
+It rejects a missing screen, empty subject, multiple substantial disconnected
+subjects and canvas-cut output in strict mode. These numeric checks still need
+visual review for semantic grouping, source fidelity and appearance.
+
+```sh
+python -m unittest test_core test_objects test_terrain test_selection -v
+```
+
+## Individual objects (legacy instance mode)
+
+`Reference → vision LLM objects JSON → BAMidFarObjectPlan → image editor → BAMidFarObjectMatte → SaveImage`
+
+视觉模型必须识别**实例**：两栋楼是两项，不把建筑群、整片树林、连续山脉写成一项。每项的 id 唯一，bbox 为归一化的 `[left, top, right, bottom]`：
+
+```json
+{
+  "style": "原图画风、照明、透视",
+  "objects": [
+    {
+      "id": "o01",
+      "name": "左侧红砖楼",
+      "layer": "midground",
+      "location": "原图左侧，拱桥后方",
+      "appearance": "瓦顶、三层红砖墙",
+      "occlusion": "底部被近处栏杆遮挡",
+      "bbox": [0.12, 0.3, 0.34, 0.8],
+      "is_single": true
+    }
+  ]
+}
+```
+
+ObjectPlan 输出 `object_prompt`、`reference`、`key_color`、`filename_prefix` 四个**对齐的动态列表**。标准 ComfyUI 自动逐项映射；**ByteArtist BALLMImage carrier 当前只执行第一项，不能直接把动态列表接入一个图片生成节点**。ByteArtist 请使用下文的 WorkflowExpand。标准 ComfyUI 连接：
+
+- ObjectPlan.object_prompt → 图片编辑.prompt（ByteArtist API 名称 `prompt0`）
+- ObjectPlan.reference → 图片编辑.image（ByteArtist API 名称 `image0`）
+- 图片编辑.image → ObjectMatte.image
+- ObjectPlan.key_color、filename_prefix → ObjectMatte 对应输入
+- ObjectMatte.rgba → SaveImage.images
+- ObjectMatte.filename_prefix → SaveImage.filename_prefix
+
+每个物体居中、完整输出，保留原视角并补全合理的遮挡部分，不带相邻实例和地面底座。图片编辑模型必须只生成一张变体。ObjectMatte 保留 RGBA 与柔边，只裁掉空白，不改变主体像素。每张素材尺寸可不同，因此不把素材强制合为同尺寸 batch。
+
+`layer=both` 提取中景与远景，按两层交替输出，亦可只选其中一层。`max_objects` 默认 8，范围 1–32；超过上限的数量在 `manifest.truncated` 中明确显示。兼容模型混用的 0–1 / 0–1000 位置坐标，规范化记录在 `bbox_normalized`；整片树林、天际线、水面等被剔除，并在 `rejected_objects` 保留原因。无可辨认实例则报错，不编造物体。`strict=true` 拒绝空图、多个显著分离主体或触及画布边界的结果；检测不能识别全部语义粘连，仍需目视复核。细节本来分离的物体可人工确认后关闭 strict。
+
+遮挡补全由图片模型推断，不保证不可见纹理与真实原物体完全一致。模型质量、输入清晰度与色键冲突会影响效果。
+
+### ByteArtist: independent carriers
+
+`Reference → vision LLM → BAMidFarWorkflowExpand → SaveText → import generated ByteArtist JSON → run`
+
+WorkflowExpand 根据当前图片的分析结果展开独立分支，每项一个 ObjectPlan、一个 BALLMImage、一个 ObjectMatte 和一个 SaveImage。每个 ObjectPlan 只包含该实例，不会把第一张输出重复保存为其他对象。`workflow_template` 是提供的 ByteArtist 图模板 JSON，`reference_filename` 填当前已上传参考图的文件名，`max_objects` 控制本次输出数。先运行分析工作流，导入它生成的 `workflow_json` 后运行提取。更换参考图要重新运行分析，不要沿用旧图的实例描述。
+
+随附 `objects.expand_workflow()` 可用于离线展开已获得的真实分析计划。工作流无固定类别、景物或场景模板；分支由当前图的有效实例数量与配置上限决定。已展开的测试 JSON 仅针对各自参考图。
+
+## Install
+
+在 ComfyUI 的 `custom_nodes` 目录克隆此仓库，使用 **ComfyUI 实际的 Python 环境**安装依赖，然后重启。ByteArtist 可在 Manager → 通过 URL 下载 → 插件下载输入仓库 Git URL。
+
+```sh
+git clone https://github.com/372342890/ComfyUI-MidFar-Extract.git
+python -m pip install -r ComfyUI-MidFar-Extract/requirements.txt
+```
+
+ComfyUI 已提供 PyTorch；本插件不重装 PyTorch。安装后应出现 `BAMidFarObjectPlan`、`BAMidFarObjectMatte`、`BAMidFarWorkflowExpand` 及旧版 `BAMidFarPlanPrompt`、`BAMidFarMatte`。
+
+## Workflow
+
+`Reference image → vision LLM scene JSON → MidFar Scene Prompt (one per layer) → image editor with original reference → MidFar Soft Matte → SaveImage`
+
+视觉模型需输出以下结构，所有实体仅来自当前参考图。没有某层就输出空数组，不编造：
+
+```json
+{
+  "foreground": ["近处实体的具体描述"],
+  "midground": ["中景实体及位置、外观"],
+  "background": ["远景实体及位置、外观"],
+  "sky": "原天空描述",
+  "style": "画风、视角和照明",
+  "occlusion": "谁遮挡了哪一层，如何连续补全"
+}
+```
+
+`key_mode=auto` 根据参考图色彩选择绿色、品红或蓝色中冲突最少的色键。把 `prompt` 送给支持参考图编辑的模型，同时把 **同一个** `key_color` 连到对应抠图节点。生成尺寸和比例应与参考图一致。
+
+### Outputs and controls
+
+- `rgba`：带真实 Alpha 的 4 通道 IMAGE，**直接连 SaveImage**，不要再次 JoinImageWithAlpha。
+- `foreground_mask`：1=主体不透明，0=背景透明。与 ComfyUI LoadImage 的透明度 MASK 方向相反。
+- `preview`：棋盘格检查图，便于确认软边、细枝与孔洞。
+- `quality`：每张图的主体覆盖率、软边比例和基础告警；不能代替人工分层质量审查。
+- `softness`：纯色底容差，默认 0.04；色底略有偏差可升至 0.06。不做固定腐蚀或膨胀。
+- `despill`：解算并去除混色边缘中的色键颜色，默认开启。
+- 远离不透明主体的低 Alpha 色键残留会被清除，避免深色底上出现透明布纹；不透明细枝及其软边邻域保留。
+
+## Limits
+
+这是色键抠图，不能从普通照片直接推断语义层次。最终分层与遮挡补全依赖所使用的视觉模型 / 图片编辑模型；被遮挡区域是生成的重建，不是原图中可恢复的真实像素。与色键完全相同的主体颜色无法可靠区分，可换另一色键重新生成。玻璃、烟雾与复杂半透明材质需要人工复核。
+
+## Tests
+
+```sh
+python -m unittest test_core -v
+```
+
+14 项测试覆盖场景 JSON 验证、动态提示、自动选色、软 Alpha 解算、颜色恢复、细枝保留、远离主体的色键残留、质量告警、批次与输入检查。测试仅需 NumPy / OpenCV；运行节点使用 ComfyUI 的 PyTorch。
+
+MIT License. No credentials, service endpoints, private workflows or project assets are included.
+
+## Automatic three-asset workflow with editable source guides
+
+Import `midfar-three-autonomous.byteartist.json` in ByteArtist, replace the
+reference image, then click global run once. The fixed graph examines candidate
+connections and occlusions, selects three units, and makes a real source crop for
+each target. A source-coordinate target point is marked automatically before
+precise polygon localization. Every generation and repair receives the actual
+original crop as image 1 and a rough source-pixel guide as image 2, through
+standard `LoadImage` handoffs. Repairs also receive the actual previous candidate
+as image 3, so the model can see and edit the defects cited by the review.
+The original crop is authoritative for visible geometry, peak count and style;
+the guide only identifies the unit and may omit real regions or contain notches.
+Neither the guide nor the prior candidate freezes an incorrect mask.
+
+Every image call uses Seedream 5.0 pro. Two feedback rounds regenerate from the
+editable source guide so they can remove unrelated upper fragments, restore connected
+side peaks, and complete natural hidden feet. Source fidelity is checked against
+the actual original crop and the identified editable target guide. Global scene locations are not reinterpreted as
+positions within that crop. The deployed graph does not freeze or composite an
+incorrect localization mask into the final generated asset.
+Final selection still requires every numeric and visual gate to pass, including
+all attached parts, a natural complete base, reference style and clean alpha.
+Tiny disconnected key-colored compression noise is recorded separately; real
+detached foreground parts remain blocking defects.
+
+The graph contains 9 image calls and 14 text calls. Generation may fail its
+quality gates; an unsuccessful run never delivers a rejected image as success.
+The streamlined graph includes 106 nodes and 271 connections. Twelve
+side-effect-only `SaveText` nodes and the literal prefix node were removed;
+the prefix is now an inline input on each source-reference node. All remaining
+nodes contribute to the three final PNGs. Model inputs, identity anchors,
+matting and both correction rounds are unchanged. The native image
+handoffs deliver the actual crop, guide and exact reviewed candidate to each repair.
+Earlier 98-node / 220-connection clipboard loading was verified after the
+workbench completed mounting; large graphs may take time to load. Allow the
+workbench to mount the graph before replacing or re-importing it.
+
+Visual review uses a two-column comparison plus a full-width lower-foot detail
+to retain the visibility of small foreground tree silhouettes, chopped side
+planes and thin polygon bases. These are blocking defects even when alpha
+recovery succeeds and the asset has transparent canvas margins. The generation
+and repair prompts explicitly remove forest ribbons and reconstruct continuous
+short rock/snow feet. Review images are diagnostic views only; no output pixels
+are retouched or replaced outside the generative workflow.
+
+Localization also identifies `occluder_polygons`, including small crossing tree
+crowns and internal occluders. Their source pixels are excluded from the guide;
+premultiplied RGB and mask use the same resize filter to prevent excluded tree
+colors bleeding back in. More than 45% removal is rejected, and attached target
+rock cannot be an occluder kind. Automatic screen selection checks hue collisions
+even in dark trees while ignoring nearly neutral snow/stone hues.
+When suspicious screen-hue pixels occur inside recovered foreground, visual
+review receives an unchanged magnified `KEY COLOR DETAIL` and compares it to
+the original material. Repairs must erase tree geometry, rather than recolor it.
+The localization reply has its own 4500-token allowance for target and occluder
+polygons; shorter verdict-only reviews retain their 1800-token allowance.
+
+Optional diagnostic prefixes retain raw candidates, alpha review images and
+the original numeric/visual replies under the output directory even if final
+selection raises. These are inspection records, not accepted asset outputs.
+Localization polygon and occluder records remain node outputs for inspection,
+without separate text-file saves in the production graph.
+Screen prompts require a flat RGB color without paint grain.
+The current-crop identity anchor is passed to generation, review and repair.
+Diagnostic source views show a red circle at the automatically chosen point;
+model image inputs retain the original unmarked pixels. The marker is annotation
+only. Its crop coordinates take priority over global scene location words so a
+nearby mountain cannot silently replace the selected unit during review.
+The workflow still has exactly three final `SaveImage` nodes.
+
+Intermediate references now pass through `BAMidFarNativeImageFile` and standard
+`LoadImage` before reaching native image/text models. PNG files preserve RGB
+pixels and use content-addressed paths under the ComfyUI input directory. This
+also makes native model references independently inspectable; it does not relax
+the numeric or visual acceptance gates.
+
+A geometric lower-profile check rejects deep unfilled occlusion cutouts even
+if a visual model misses them. The legacy foot-completion compositor is not
+used; generated pixels are never overwritten with a frozen rough localization.
+
+## Reference-guided natural terrain assets
+
+`Style image + shape image + brief → vision LLM assets JSON → BATerrainWorkflowExpand → import JSON → independent image carriers → RGBA PNGs`
+
+This mode **generates** individual rocks, grassy hills, grass tufts and mountains. It is separate from strict existing-instance extraction. A hill keeps its own grass cover and soil/rock volume; a tuft keeps its connected roots. Neither receives an additional platform or landscape strip.
+
+The scene image controls palette, texture and rendering style. A single-object view or four-view sheet controls silhouette and proportions. The generator receives the style image as image 1 and shape image as image 2. A four-view sheet is a shape reference, not the requested output; every generated PNG contains one object in one view.
+
+**ByteArtist clipboard format:** connect both references to the **same** image aggregation handle, in style-then-shape order. The frontend serializes these as `image0` and `image1`. Do not invent a separate UI input named `image1`; it is silently omitted on import. The same rule applies to the visual planner and the image generator.
+
+The visual planner must produce the following schema from the **current images and user brief**, with variable target names, shapes, surfaces and variations. Valid kinds: `rock`, `hill`, `grass_tuft`, `mountain`.
+
+```json
+{
+  "style": "Observed palette, simplified materials, lighting and rendering style",
+  "assets": [{
+    "id": "a01",
+    "name": "Individual grassy hill",
+    "kind": "hill",
+    "shape": "One low wide mound with a complete natural base",
+    "surface": "Short grass on its own rounded volume",
+    "variation": "Slightly asymmetric rise",
+    "is_single": true
+  }]
+}
+```
+
+`BATerrainWorkflowExpand` takes `plan`, `workflow_template`, `style_filename`, `shape_filename`, `max_assets` and emits a ByteArtist clipboard workflow JSON plus a manifest. The template contains two LoadImage nodes (style first, shape second), one BATerrainAssetPrompt, BALLMImage, BAMidFarObjectMatte, SaveImage, and optional SaveText nodes for quality/manifest output. Each generated branch contains **exactly one** asset prompt and its own carrier. Changed references or briefs require a fresh visual plan.
+
+`BATerrainAssetPrompt` takes one-asset JSON, `style_reference`, `shape_reference`, `key_mode`, `filename_prefix`. Outputs are `prompt`, `style_reference`, `shape_reference`, `key_color`, `filename_prefix`, `manifest`. Wire the first three to the image carrier's prompt, image 1 and image 2. Wire key/filename to BAMidFarObjectMatte. Unlike the older list node, this node explicitly rejects multiple assets; use the expander.
+
+In this reference-guided image mode, GLBs are shape references. The separate
+three-asset workflow below adds generated 3D outputs; it does not promise exact
+topology reconstruction from a 2D reference.
+
+```sh
+python -m unittest test_core test_objects test_terrain -v
+```
+
+34 tests cover previous extraction/matting behavior plus natural-asset validation, hill/tuft completeness, complementary-color edge recovery and separate two-reference carrier expansion. Strict checks detect empty, border-cut or separated subjects; semantic style and silhouette still need visual review.
+
+## Three accepted PNGs → three generated GLBs
+
+Import `midfar-three-glb.byteartist.json`. Replace the single input image and
+optionally the three filename prefixes, then run the whole graph once. It keeps
+the accepted 106-node PNG graph intact and adds seven nodes (113 total):
+one shared `BAMidFar3DModel`, three `BAMidFar3DGenerate` instances and three
+`BAMidFarGLBExport` instances. All three original PNG outputs remain.
+
+Image generation stays on Seedream 5.0 pro. Shape generation uses the installed
+native Hunyuan3D 2.0 image-conditioned diffusion pipeline, 3072 latent tokens,
+30 Euler steps/CFG 5, octree 256 and surface-net extraction. The first run
+downloads the pinned official 4.93 GB checkpoint to
+`models/checkpoints/midfar/`; size and SHA256 must match before loading.
+Download progress is stored under `output/midfar-3d/hunyuan-download.json`.
+Allow sufficient model storage and GPU memory.
+The pinned file is downloaded from `hf-mirror.com` with the official Hugging Face
+URL as fallback. Both sources must pass the same official size and SHA256.
+This version matches the workbench's native `Hunyuan3Dv2` model detector;
+Hunyuan3D 2.1 requires a newer ComfyUI core than this workbench currently runs.
+
+RGBA is composited on white with square padding; it is never stretched or
+cropped. Generated mesh positions and triangle indices are preserved in glTF
+2.0 binary output. Empty, invalid or planar meshes fail instead of exporting a
+fake plane. Each GLB embeds a PNG texture and matte material (metallic 0,
+roughness 1), with no external texture dependency. A `.3d.json` report beside
+each GLB records model revision, native parameters, bounds and output hash.
+
+**Texture scope:** front-axis UV projection transfers colors from the accepted
+PNG. Side and back colors use nearest foreground color extension from that
+single front reference. This is not independent multiview AI texture painting;
+side/back detail may be less faithful than the front view. Geometry is generated
+by the real 3D model, not an extrusion or a textured plane.
+
+## Automatic grid cutting with different columns per row
+
+`AutoGridSplit` detects horizontal rows first and measures each row's vertical
+separators independently. A sheet with 4 / 4 / 5 cells produces 13 individual
+crops rather than merging adjacent assets. Empty cells are filtered; separate
+parts belonging to the same grid cell remain together. Cropping preserves source
+pixels; the IMAGE batch is padded to a common size without resizing.
+Different row heights and column widths are supported. Narrow blank cells are
+filtered without aborting the rest of the sheet; inferred gutter cells do not
+need similar widths. Up to 20 cells per axis and 100 cells per sheet are allowed.
+Line detection checks a narrow darker stroke against its two flanks and requires
+it to reach both ends of the row or sheet. Broad gray building surfaces and tall
+gray parts stopping inside a cell are rejected as separator candidates.
+
+`GridAssetSplitter` additionally provides explicit row/column overrides and a
+report with `row_columns` and `row_x_boundaries`. Uniform grids retain the shared
+`x_boundaries` field; it is `null` when rows use different partitions. `columns`
+then reports the maximum column count. Explicit manual settings remain
+authoritative. Clear separators or blank gutters are needed for automatic
+detection; it does not infer semantic object boundaries inside a cell.
+
+## Seedream 5.0 Pro batch enhancement with resolution selection
+
+`AutoGridSplit.images → SeedreamBatch2K.images → SaveImage`
+
+Display name: **Seedream 5.0 Pro · 批量高清 · 尺寸可选**. One IMAGE batch input and one
+IMAGE batch output. It calls the workbench's installed `BALLMImage` carrier with
+the actual `Doubao-Seedream-5.0-pro` model, one current reference PNG per request,
+in source order. Every returned image must be exactly the selected square size in RGB.
+No local resizing is substituted when generation fails.
+
+The legacy class identifier `SeedreamBatch2K` and socket name `images_2048`
+are retained to preserve saved workflow connections. The optional `resolution`
+widget defaults to `1024x1024`, including old workflows without this input.
+Known 512/768/960/1024/2048 square dimensions in saved enhancement prompts follow the
+selected size while the remaining instruction is preserved.
+
+`960x960` replaces the smaller 512/768 options. It has 921600 total pixels,
+matching the minimum documented for requests with explicit dimensions.
+The official Seedream 5.0 Pro guide also describes native 1K, 1.5K and 2K sizes.
+Every response is checked for the requested dimensions. Unsupported or mismatched
+requests fail explicitly without resizing or switching models.
+See the [official model guide](https://console.volcengine.com/ark/region:cn-beijing/docs/ark/seedream-5-0-pro?lang=zh).
+
+The default instruction preserves the subject, current view, orientation,
+proportions, palette and background while improving clarity. Non-square subjects
+are requested with proportional background padding. This is generative
+enhancement: details may change, and exact pixel or silhouette preservation is
+not guaranteed. Review the first outputs before running the entire batch.
+
+- `max_images=0`: process all images; use `1` or `2` for a small first run.
+- `seed`: initial provider seed, incremented per source image.
+- `resolution`: `960x960`, `1024x1024` (default), or `2048x2048`.
+- `reuse_completed=true`: use completed PNGs for the same reference, instruction,
+  model, seed and resolution. Changing these parameters generates new results.
+- `instruction`: editable enhancement prompt.
+
+Each uncached image is a separate model request and incurs the provider's usual
+cost. Completed files are retained under `output/seedream-batch-960/`,
+`output/seedream-batch-1k/` or `output/seedream-batch-2k/`, including
+when a later image fails or the batch is cancelled. Errors include the source
+index; failed calls are not automatically repeated. Rerun to resume from
+completed results. To deliberately regenerate, disable `reuse_completed`.
+Invalid cached files produce an explicit error rather than a silent paid retry.
+The output is RGB; this node does not restore transparency.
+Progress advances only after each image is completed. UI result metadata
+`seedream_timings` records each actual native call's elapsed seconds and cache
+status; cached images have zero request seconds. These durations exclude the
+outer task queue and final SaveImage node.
+
+The existing ByteArtist runtime, account authorization and native image carrier
+are required. No new API key is bundled in this plugin. Update this Git URL in
+the room's Manager, restart the workbench, then add `SeedreamBatch2K`.
+Existing 1024 cache keys remain valid; other resolutions use separate keys.
+The output batch uses about 12 MiB per 1024 image or 48 MiB per 2048 image
+in CPU memory (12 images at 2048 ≈576 MiB).
+
+```sh
+python -m unittest test_grid_core test_seedream_batch_2k test_compact_native test_image_handoff -v
+```
+
+These tests exercise real PNG handoff and completed-file reuse with a simulated
+carrier. They do not claim the external Seedream service has generated images.
