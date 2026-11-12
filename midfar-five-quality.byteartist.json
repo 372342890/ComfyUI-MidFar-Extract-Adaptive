@@ -9714,6 +9714,480 @@
           ]
         }
       }
+    },
+    {
+      "id": "40",
+      "type": "baNode",
+      "position": {
+        "x": 2700,
+        "y": 400
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "首轮全图留白1 · 触边原样保留",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "45",
+      "type": "baNode",
+      "position": {
+        "x": 4760,
+        "y": 400
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "重试全图留白1 · 不掩盖裁边",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "41",
+      "type": "baNode",
+      "position": {
+        "x": 2700,
+        "y": 1050
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "首轮全图留白2 · 触边原样保留",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "46",
+      "type": "baNode",
+      "position": {
+        "x": 4760,
+        "y": 1050
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "重试全图留白2 · 不掩盖裁边",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "42",
+      "type": "baNode",
+      "position": {
+        "x": 2700,
+        "y": 1700
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "首轮全图留白3 · 触边原样保留",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "47",
+      "type": "baNode",
+      "position": {
+        "x": 4760,
+        "y": 1700
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "重试全图留白3 · 不掩盖裁边",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "43",
+      "type": "baNode",
+      "position": {
+        "x": 2700,
+        "y": 2350
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "首轮全图留白4 · 触边原样保留",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "48",
+      "type": "baNode",
+      "position": {
+        "x": 4760,
+        "y": 2350
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "重试全图留白4 · 不掩盖裁边",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "44",
+      "type": "baNode",
+      "position": {
+        "x": 2700,
+        "y": 3000
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "首轮全图留白5 · 触边原样保留",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "49",
+      "type": "baNode",
+      "position": {
+        "x": 4760,
+        "y": 3000
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarCanvasFit",
+        "title": "重试全图留白5 · 不掩盖裁边",
+        "inputs": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "image",
+            "label": "image",
+            "type": "IMAGE"
+          },
+          {
+            "name": "fit_record",
+            "label": "fit_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "fit_record"
+          ]
+        }
+      }
+    },
+    {
+      "id": "50",
+      "type": "baNode",
+      "position": {
+        "x": 6780,
+        "y": 1100
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarFiveArchive",
+        "title": "⑫ 合格五图导出 · 复制输出文本保存ZIP",
+        "inputs": [
+          {
+            "name": "image_1",
+            "label": "image_1",
+            "type": "IMAGE",
+            "format": "slot"
+          },
+          {
+            "name": "image_2",
+            "label": "image_2",
+            "type": "IMAGE",
+            "format": "slot"
+          },
+          {
+            "name": "image_3",
+            "label": "image_3",
+            "type": "IMAGE",
+            "format": "slot"
+          },
+          {
+            "name": "image_4",
+            "label": "image_4",
+            "type": "IMAGE",
+            "format": "slot"
+          },
+          {
+            "name": "image_5",
+            "label": "image_5",
+            "type": "IMAGE",
+            "format": "slot"
+          },
+          {
+            "name": "quality_record",
+            "label": "quality_record",
+            "type": "STRING",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "archive",
+            "label": "archive",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": []
+        }
+      }
     }
   ],
   "edges": [
@@ -10698,6 +11172,38 @@
       "type": "baEdge",
       "source": "15",
       "sourceHandle": "image",
+      "target": "40",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-62",
+      "type": "baEdge",
+      "source": "25",
+      "sourceHandle": "image",
+      "target": "45",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-63",
+      "type": "baEdge",
+      "source": "40",
+      "sourceHandle": "image",
       "target": "30",
       "targetHandle": "image_1",
       "data": {
@@ -10710,7 +11216,7 @@
       }
     },
     {
-      "id": "quality-62",
+      "id": "quality-64",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_1",
@@ -10726,9 +11232,9 @@
       }
     },
     {
-      "id": "quality-63",
+      "id": "quality-65",
       "type": "baEdge",
-      "source": "15",
+      "source": "40",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "image_1",
@@ -10742,9 +11248,9 @@
       }
     },
     {
-      "id": "quality-64",
+      "id": "quality-66",
       "type": "baEdge",
-      "source": "25",
+      "source": "45",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "retry_1",
@@ -10758,7 +11264,7 @@
       }
     },
     {
-      "id": "quality-65",
+      "id": "quality-67",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_1",
@@ -10774,7 +11280,7 @@
       }
     },
     {
-      "id": "quality-66",
+      "id": "quality-68",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_1",
@@ -10790,9 +11296,41 @@
       }
     },
     {
-      "id": "quality-67",
+      "id": "quality-69",
       "type": "baEdge",
       "source": "16",
+      "sourceHandle": "image",
+      "target": "41",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-70",
+      "type": "baEdge",
+      "source": "26",
+      "sourceHandle": "image",
+      "target": "46",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-71",
+      "type": "baEdge",
+      "source": "41",
       "sourceHandle": "image",
       "target": "30",
       "targetHandle": "image_2",
@@ -10806,7 +11344,7 @@
       }
     },
     {
-      "id": "quality-68",
+      "id": "quality-72",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_2",
@@ -10822,9 +11360,9 @@
       }
     },
     {
-      "id": "quality-69",
+      "id": "quality-73",
       "type": "baEdge",
-      "source": "16",
+      "source": "41",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "image_2",
@@ -10838,9 +11376,9 @@
       }
     },
     {
-      "id": "quality-70",
+      "id": "quality-74",
       "type": "baEdge",
-      "source": "26",
+      "source": "46",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "retry_2",
@@ -10854,7 +11392,7 @@
       }
     },
     {
-      "id": "quality-71",
+      "id": "quality-75",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_2",
@@ -10870,7 +11408,7 @@
       }
     },
     {
-      "id": "quality-72",
+      "id": "quality-76",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_2",
@@ -10886,9 +11424,41 @@
       }
     },
     {
-      "id": "quality-73",
+      "id": "quality-77",
       "type": "baEdge",
       "source": "17",
+      "sourceHandle": "image",
+      "target": "42",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-78",
+      "type": "baEdge",
+      "source": "27",
+      "sourceHandle": "image",
+      "target": "47",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-79",
+      "type": "baEdge",
+      "source": "42",
       "sourceHandle": "image",
       "target": "30",
       "targetHandle": "image_3",
@@ -10902,7 +11472,7 @@
       }
     },
     {
-      "id": "quality-74",
+      "id": "quality-80",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_3",
@@ -10918,9 +11488,9 @@
       }
     },
     {
-      "id": "quality-75",
+      "id": "quality-81",
       "type": "baEdge",
-      "source": "17",
+      "source": "42",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "image_3",
@@ -10934,9 +11504,9 @@
       }
     },
     {
-      "id": "quality-76",
+      "id": "quality-82",
       "type": "baEdge",
-      "source": "27",
+      "source": "47",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "retry_3",
@@ -10950,7 +11520,7 @@
       }
     },
     {
-      "id": "quality-77",
+      "id": "quality-83",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_3",
@@ -10966,7 +11536,7 @@
       }
     },
     {
-      "id": "quality-78",
+      "id": "quality-84",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_3",
@@ -10982,9 +11552,41 @@
       }
     },
     {
-      "id": "quality-79",
+      "id": "quality-85",
       "type": "baEdge",
       "source": "18",
+      "sourceHandle": "image",
+      "target": "43",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-86",
+      "type": "baEdge",
+      "source": "28",
+      "sourceHandle": "image",
+      "target": "48",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-87",
+      "type": "baEdge",
+      "source": "43",
       "sourceHandle": "image",
       "target": "30",
       "targetHandle": "image_4",
@@ -10998,7 +11600,7 @@
       }
     },
     {
-      "id": "quality-80",
+      "id": "quality-88",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_4",
@@ -11014,9 +11616,9 @@
       }
     },
     {
-      "id": "quality-81",
+      "id": "quality-89",
       "type": "baEdge",
-      "source": "18",
+      "source": "43",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "image_4",
@@ -11030,9 +11632,9 @@
       }
     },
     {
-      "id": "quality-82",
+      "id": "quality-90",
       "type": "baEdge",
-      "source": "28",
+      "source": "48",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "retry_4",
@@ -11046,7 +11648,7 @@
       }
     },
     {
-      "id": "quality-83",
+      "id": "quality-91",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_4",
@@ -11062,7 +11664,7 @@
       }
     },
     {
-      "id": "quality-84",
+      "id": "quality-92",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_4",
@@ -11078,9 +11680,41 @@
       }
     },
     {
-      "id": "quality-85",
+      "id": "quality-93",
       "type": "baEdge",
       "source": "19",
+      "sourceHandle": "image",
+      "target": "44",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-94",
+      "type": "baEdge",
+      "source": "29",
+      "sourceHandle": "image",
+      "target": "49",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-95",
+      "type": "baEdge",
+      "source": "44",
       "sourceHandle": "image",
       "target": "30",
       "targetHandle": "image_5",
@@ -11094,7 +11728,7 @@
       }
     },
     {
-      "id": "quality-86",
+      "id": "quality-96",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_5",
@@ -11110,9 +11744,9 @@
       }
     },
     {
-      "id": "quality-87",
+      "id": "quality-97",
       "type": "baEdge",
-      "source": "19",
+      "source": "44",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "image_5",
@@ -11126,9 +11760,9 @@
       }
     },
     {
-      "id": "quality-88",
+      "id": "quality-98",
       "type": "baEdge",
-      "source": "29",
+      "source": "49",
       "sourceHandle": "image",
       "target": "33",
       "targetHandle": "retry_5",
@@ -11142,7 +11776,7 @@
       }
     },
     {
-      "id": "quality-89",
+      "id": "quality-99",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_5",
@@ -11158,11 +11792,107 @@
       }
     },
     {
-      "id": "quality-90",
+      "id": "quality-100",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_5",
       "target": "36",
+      "targetHandle": "image_5",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-101",
+      "type": "baEdge",
+      "source": "36",
+      "sourceHandle": "quality_record",
+      "target": "50",
+      "targetHandle": "quality_record",
+      "data": {
+        "type": "STRING",
+        "sourceType": "STRING",
+        "targetType": "STRING",
+        "extra": {
+          "type": "STRING"
+        }
+      }
+    },
+    {
+      "id": "quality-102",
+      "type": "baEdge",
+      "source": "36",
+      "sourceHandle": "image_1",
+      "target": "50",
+      "targetHandle": "image_1",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-103",
+      "type": "baEdge",
+      "source": "36",
+      "sourceHandle": "image_2",
+      "target": "50",
+      "targetHandle": "image_2",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-104",
+      "type": "baEdge",
+      "source": "36",
+      "sourceHandle": "image_3",
+      "target": "50",
+      "targetHandle": "image_3",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-105",
+      "type": "baEdge",
+      "source": "36",
+      "sourceHandle": "image_4",
+      "target": "50",
+      "targetHandle": "image_4",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-106",
+      "type": "baEdge",
+      "source": "36",
+      "sourceHandle": "image_5",
+      "target": "50",
       "targetHandle": "image_5",
       "data": {
         "type": "IMAGE",

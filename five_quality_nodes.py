@@ -1,9 +1,13 @@
 """ComfyUI adapters; native visible model nodes perform all generation/review."""
 import json
 import os
+import base64
+import hashlib
+import io
 from pathlib import Path
 import shutil
 import tempfile
+import zipfile
 
 import numpy as np
 from PIL import Image
@@ -12,6 +16,7 @@ import torch
 from .five_quality import (
     compile_plan, decode, evaluate_review, finalize, inspect_images,
     prepare_reference, repair_prompts,
+    fit_canvas, image_hash,
 )
 
 
@@ -94,6 +99,68 @@ class BAMidFarFiveInspect:
         sheet, prompt, inspection = inspect_images(
             decode(plan), _array(reference), [_array(images[f"image_{i}"]) for i in range(1, 6)])
         return torch.from_numpy(sheet), prompt, _json(inspection)
+
+
+class BAMidFarCanvasFit:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {"image": ("IMAGE",)}}
+
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("image", "fit_record")
+    FUNCTION = "run"
+    CATEGORY = "MidFar Extract/Five Quality"
+
+    def run(self, image):
+        array = _array(image)
+        result, record = fit_canvas(array, array.shape[2])
+        return torch.from_numpy(result), _json(record)
+
+
+class BAMidFarFiveArchive:
+    """Clipboard transport for real PNGs; no model or external upload."""
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {
+            **{f"image_{i}": ("IMAGE",) for i in range(1, 6)},
+            "quality_record": ("STRING", {"default": "", "multiline": True}),
+        }}
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("archive",)
+    FUNCTION = "run"
+    CATEGORY = "MidFar Extract/Five Quality"
+    OUTPUT_NODE = True
+
+    def run(self, quality_record, **images):
+        arrays = [_array(images[f"image_{i}"]) for i in range(1, 6)]
+        hashes = [image_hash(image) for image in arrays]
+        accepted = bool(quality_record.strip())
+        record = decode(quality_record) if accepted else None
+        if accepted and (
+                record.get("status") != "accepted" or record.get("image_hashes") != hashes or
+                [record.get(k) for k in ("png_count", "near_count", "far_count", "pair_count")]
+                != [5, 3, 2, 10]):
+            raise ValueError("导出验收记录与五张实际像素不一致，禁止标记通过。")
+        manifest = {"accepted": accepted, "image_hashes": hashes, "files": [],
+                    "quality_record": record, "hidden_model_calls": 0}
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for i, array in enumerate(arrays, 1):
+                if array.shape[0] != 1:
+                    raise ValueError("每路导出必须恰好一张图。")
+                png = io.BytesIO()
+                pixels = np.round(np.clip(array[0], 0, 1)*255).astype(np.uint8)
+                Image.fromarray(pixels).save(png, format="PNG")
+                content = png.getvalue()
+                name = f"{'accepted' if accepted else 'diagnostic'}_{i}.png"
+                archive.writestr(name, content)
+                manifest["files"].append({"name": name, "sha256": hashlib.sha256(content).hexdigest()})
+            archive.writestr("manifest.json", _json(manifest))
+        content = buffer.getvalue()
+        text = json.dumps({"accepted": accepted, "zip_sha256": hashlib.sha256(content).hexdigest(),
+                           "zip_base64": base64.b64encode(content).decode("ascii")})
+        return {"ui": {"text": [text]}, "result": (text,)}
 
 
 class BAMidFarFiveRetry:

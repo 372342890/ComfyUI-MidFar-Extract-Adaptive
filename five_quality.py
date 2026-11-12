@@ -269,6 +269,31 @@ def _thumb(image, width, height):
     return picture
 
 
+def fit_canvas(image, canvas_size=2048):
+    """Shrink the entire source canvas; a cut edge remains a failed source."""
+    pixels = validate_image(image)
+    check = image_quality(pixels, canvas_size)
+    h, w = pixels.shape[1:3]
+    box = check["bbox_pixels"]
+    cut = box is not None and min(box[0], box[1], w-box[2], h-box[3]) <= 1
+    record = {"source_hash": image_hash(pixels), "source_cut": cut,
+              "source_bbox_pixels": box, "operation": "unchanged",
+              "scaled_size": [w, h], "no_crop": True, "no_shape_redraw": True}
+    if cut or check["passed"] or box is None or (w, h) != (canvas_size, canvas_size):
+        return pixels, record
+    # Fit the full canvas, including same-colored snow, not the detected bbox.
+    size = int(canvas_size*.65)
+    scaled = cv2.resize(pixels[0], (size, size), interpolation=cv2.INTER_AREA)
+    result = np.ones_like(pixels)
+    if pixels.shape[-1] == 4:
+        result[..., 3] = 0
+    offset = (canvas_size-size)//2
+    result[0, offset:offset+size, offset:offset+size] = scaled
+    record.update(operation="whole_canvas_scale", scaled_size=[size, size],
+                  offset_pixels=[offset, offset], output_hash=image_hash(result))
+    return result, record
+
+
 def inspect_images(plan, reference, images):
     plan = decode(plan)
     if plan.get("quality_contract") != "three-near-two-far-v1" or len(images) != 5:
@@ -311,6 +336,17 @@ def inspect_images(plan, reference, images):
     context = {"run_id": plan["run_id"], "review_id": inspection["review_id"],
                "targets": plan["recognized_targets"], "pe": plan["original_pe"],
                "numeric": inspection}
+    template = {
+        "run_id": plan["run_id"], "review_id": inspection["review_id"],
+        "objects": [
+            {"id": target["id"],
+             "checks": {key: {"passed": False, "evidence": ""} for key in VISUAL_CHECKS},
+             "landmarks": [{"name": p["name"], "preserved": False, "evidence": ""}
+                           for p in target["landmarks"]]}
+            for target in plan["recognized_targets"]],
+        "pairs": [{"ids": [a["id"], b["id"]], "distinct": False, "evidence": ""}
+                  for a, b in combinations(plan["recognized_targets"], 2)],
+    }
     prompt = """对照所连接的本轮原图/成图对照表，执行五路严格视觉验收。
 顶部是完整原图，下方五行左为同一原图本路裁图、右为实际成图；不可看旧预览。
 检查3近景2远景身份、至少三处独有中大尺度锚点、真实连续岩土和天然山脚、
@@ -321,15 +357,15 @@ boundary_cut=true且close_visible_rock_edge的近景岩台，只允许可见末�
 对全部10对判断同组拆分、主峰共享、局部包含、镜像和替身；
 数值相似证据不是身份结论，review_required的配对务必逐一对照原图解释。
 看不清、证据不足或缺锚点必须passed=false，不能只声明“通过”。
-只输出合法JSON，run_id和review_id必须逐字使用本次上下文：
-{"run_id":"本次值","review_id":"本次值","objects":[
-{"id":"本路实际id","checks":{""" + ",".join(
-        f'"{key}":{{"passed":true,"evidence":"具体原图及成图造型对照"}}'
-        for key in VISUAL_CHECKS) + """},
-"landmarks":[{"name":"识别锚点原名","preserved":true,"evidence":"在成图的具体位置/形态"}]}],
-"pairs":[{"ids":["实际id1","实际id2"],"distinct":true,"evidence":"具体峰形/岩阶/连接差异及有无包含"}]}
+只输出合法JSON，逐字保留模板绑定值、id及锚点原名，填入实际观察证据和布尔结论。
+模板false只是未复核的初始状态；只能在图中确认该项后改为true。
+每条evidence用20到90个汉字描述具体造型，禁止输出思考过程和Markdown。
+objects数组中五项为五个独立兄弟对象，不能把下一个id/checks嵌入上一个checks。
+checks恰好十个指定键，闭合checks后再写同级landmarks，闭合整对象后再写下一目标。
+同一对象中任何键不能重复；禁止省略逗号、右括号或用省略号代替对象。
 objects必须完整5项，landmarks逐项包含本路全部原名，pairs必须完整10对且无重复；
 所有布尔值必须JSON布尔，各项都写具体证据，任一失败填false。
+完整输出模板：""" + json.dumps(template, ensure_ascii=False) + """
 本轮上下文：""" + json.dumps(context, ensure_ascii=False)
     return np.asarray(sheet, dtype=np.float32)[None]/255, prompt, inspection
 

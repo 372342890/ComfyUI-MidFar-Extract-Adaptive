@@ -164,10 +164,23 @@ def build_quality_workflow(input_filename="reference.png", filename_prefix="midf
     connect(34, "inspection", 36, "final_inspection")
     connect(35, "text", 36, "final_review")
     for i in range(1, 6):
-        connect(14+i, "image", 30, f"image_{i}")
+        first_fit, retry_fit = 39+i, 44+i
+        for identifier, model, title, x in (
+                (first_fit, 14+i, f"首轮全图留白{i} · 触边原样保留", 2700),
+                (retry_fit, 24+i, f"重试全图留白{i} · 不掩盖裁边", 4760)):
+            custom(identifier, "BAMidFarCanvasFit", title, x, (i-1)*650+400,
+                   [_slot("image", "IMAGE")], [("image", "IMAGE"), ("fit_record", "STRING")],
+                   ("fit_record",))
+            connect(model, "image", identifier, "image")
+        connect(first_fit, "image", 30, f"image_{i}")
         connect(32, f"retry_{i}", 19+i, "prompt")
-        connect(14+i, "image", 33, f"image_{i}")
-        connect(24+i, "image", 33, f"retry_{i}")
+        connect(first_fit, "image", 33, f"image_{i}")
+        connect(retry_fit, "image", 33, f"retry_{i}")
         connect(33, f"image_{i}", 34, f"image_{i}")
         connect(33, f"image_{i}", 36, f"image_{i}")
+    custom(50, "BAMidFarFiveArchive", "⑫ 合格五图导出 · 复制输出文本保存ZIP",
+           6780, 1100, [_slot(f"image_{i}", "IMAGE") for i in range(1, 6)] +
+           [_slot("quality_record", "STRING")], [("archive", "STRING")], ())
+    for pin in ["quality_record"] + [f"image_{i}" for i in range(1, 6)]:
+        connect(36, pin, 50, pin)
     return {"name": "ba-clipboard", "version": 1, "nodes": nodes, "edges": edges}

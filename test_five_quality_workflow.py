@@ -88,6 +88,24 @@ class FiveQualityWorkflow(unittest.TestCase):
             self.assertIn(edge, edges)
         self.assertNotIn(("2", "3", "text"), edges)
 
+    def test_canvas_fit_precedes_both_rounds_and_export_requires_final_gate(self):
+        nodes = {n["id"]: n["data"]["type"] for n in self.graph["nodes"]}
+        incoming = {(e["target"], e["targetHandle"]): e["source"]
+                    for e in self.graph["edges"]}
+        for i in range(1, 6):
+            first_fit = incoming[("30", f"image_{i}")]
+            self.assertEqual(nodes[first_fit], "BAMidFarCanvasFit")
+            self.assertEqual(incoming[(first_fit, "image")], str(14+i))
+            self.assertEqual(incoming[("33", f"image_{i}")], first_fit)
+            retry_fit = incoming[("33", f"retry_{i}")]
+            self.assertEqual(nodes[retry_fit], "BAMidFarCanvasFit")
+            self.assertEqual(incoming[(retry_fit, "image")], str(24+i))
+        exporters = [identifier for identifier, kind in nodes.items()
+                     if kind == "BAMidFarFiveArchive"]
+        self.assertEqual(len(exporters), 1)
+        for pin in ["quality_record"] + [f"image_{i}" for i in range(1, 6)]:
+            self.assertEqual(incoming[(exporters[0], pin)], "36")
+
 
 if __name__ == "__main__":
     unittest.main()
