@@ -7,10 +7,12 @@ try:
     from .five_quality import QUALITY_RECOGNITION, QUALITY_PE
     from .five_routes import _instruction
     from .visible_workflow import _node, _slot
+    from .recognition_instructions import GROUP_RULES
 except ImportError:
     from five_quality import QUALITY_RECOGNITION, QUALITY_PE
     from five_routes import _instruction
     from visible_workflow import _node, _slot
+    from recognition_instructions import GROUP_RULES
 
 
 def build_quality_workflow(input_filename="reference.png", filename_prefix="midfar-five-quality"):
@@ -28,8 +30,11 @@ def build_quality_workflow(input_filename="reference.png", filename_prefix="midf
         _instruction(node, instruction)
         if template != "image":
             node["data"]["extra"]["model"]["max_tokens"] = 16000
+            node["data"]["extra"]["model"]["thinking"] = {"type": "disabled"}
             node["data"]["extra"]["modelConfig"]["max_tokens"] = {
                 "switch": True, "value": 16000}
+            node["data"]["extra"]["modelConfig"]["thinking"] = {
+                "switch": True, "value": "disabled"}
         nodes.append(node)
 
     def connect(source, output, target, input_name):
@@ -52,7 +57,7 @@ def build_quality_workflow(input_filename="reference.png", filename_prefix="midf
            [{"name": "image", "label": "原图", "type": "COMBO", "value": input_filename}],
            [("IMAGE", "IMAGE"), ("MASK", "MASK")], ("IMAGE",))
     native("recognition", 2, "② 本轮统一识别 · 五个自然组与造型锚点",
-           460, 1100, QUALITY_RECOGNITION)
+           460, 1100, QUALITY_RECOGNITION + GROUP_RULES)
     native("pe", 3, "③ 原PE约束 · 连续轮廓/节奏/不拔尖/全局排除",
            940, 1100, QUALITY_PE)
     custom(4, "BAMidFarFivePlan", "④ 严格准入 · 必须三近两远且各有至少三锚点",
@@ -65,9 +70,27 @@ def build_quality_workflow(input_filename="reference.png", filename_prefix="midf
            ("plan",))
     connect(1, "IMAGE", 2, "image")
     connect(1, "IMAGE", 3, "image")
-    connect(2, "text", 3, "text")
+    custom(37, "BAMidFarRecognitionContext", "②a 解析诊断 · 绑定当前原图与候选自然组",
+           460, 3700, [_slot("reference", "IMAGE"), _slot("recognition", "STRING")],
+           [("review_prompt", "STRING"), ("reference", "IMAGE"), ("context", "STRING")],
+           ("context",))
+    native("pe", 38, "②b 原图分组复核 · 同图重新观察一次",
+           940, 3700, "按连接的当前原图与复核提示词重新识别完整自然组，只输出完整JSON。")
+    custom(39, "BAMidFarRecognitionFinal", "②c 自然组准入 · 十对分离与坐标合法性",
+           1420, 3700, [_slot("reference", "IMAGE"), _slot("context", "STRING"),
+                        _slot("review", "STRING")],
+           [("recognition", "STRING"), ("review_record", "STRING")],
+           ("recognition", "review_record"))
+    connect(1, "IMAGE", 37, "reference")
+    connect(2, "text", 37, "recognition")
+    connect(37, "review_prompt", 38, "text")
+    connect(37, "reference", 38, "image")
+    connect(1, "IMAGE", 39, "reference")
+    connect(37, "context", 39, "context")
+    connect(38, "text", 39, "review")
+    connect(39, "recognition", 3, "text")
     connect(1, "IMAGE", 4, "reference")
-    connect(2, "text", 4, "recognition")
+    connect(39, "recognition", 4, "recognition")
     connect(3, "text", 4, "pe")
     instruction = (
         "严格使用本路连接的完整PE，从当前原图动态局部参考提取同一id的整个自然组。"

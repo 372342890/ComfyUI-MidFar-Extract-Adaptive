@@ -21,12 +21,16 @@ try:
     from .five_audit import audit_pairs
     from .selection import _box, crop_reference
     from .localization_view import localization_view
+    from .quality_json import decode_record
+    from .recognition_contract import normalize_pair
 except ImportError:
     from core import validate_image
     from five_routes import RECOGNITION, PE, SHAPE_RULES, split_five
     from five_audit import audit_pairs
     from selection import _box, crop_reference
     from localization_view import localization_view
+    from quality_json import decode_record
+    from recognition_contract import normalize_pair
 
 
 STRUCTURE_ASPECTS = {
@@ -69,17 +73,7 @@ prompt也必须完整写入所有造型锚点、保护连接段、轮廓节奏�
 
 
 def decode(value):
-    if isinstance(value, dict):
-        return copy.deepcopy(value)
-    if not isinstance(value, str) or len(value) > 150000:
-        raise ValueError("JSON记录必须是150000字符内文本或对象。")
-    text = value.strip()
-    if text.startswith("```"):
-        text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)
-    parsed = json.loads(text)
-    if not isinstance(parsed, dict):
-        raise ValueError("需要完整JSON对象。")
-    return parsed
+    return decode_record(value)
 
 
 def _text(value, name):
@@ -111,7 +105,12 @@ def image_hash(image):
 
 
 def compile_plan(recognition, pe, reference, prefix, canvas_size=2048):
-    raw, written = decode(recognition), decode(pe)
+    pixels = validate_image(reference)
+    raw, written = normalize_pair(recognition, pe, [pixels.shape[2], pixels.shape[1]])
+    if raw.get("_recognition_review") is not None and (
+            not isinstance(raw["_recognition_review"], dict) or
+            raw["_recognition_review"].get("source_hash") != image_hash(reference)):
+        raise ValueError("分组复核结果不是当前原图，禁止复用旧识别。")
     targets, entries = raw.get("objects"), written.get("objects")
     if not isinstance(targets, list) or len(targets) != 5:
         raise ValueError("需要3个近景和2个远景；当前目标不足五个，不能复制或虚构补位。")
@@ -203,6 +202,8 @@ def compile_plan(recognition, pe, reference, prefix, canvas_size=2048):
     record.update(schema_version=3, quality_contract="three-near-two-far-v1",
                   source_hash=image_hash(reference), canvas_size=canvas_size,
                   execution_prompts=prompts, max_retries=1,
+                  normalization_audit=raw.get("_normalization_audit", []),
+                  recognition_review=raw.get("_recognition_review"),
                   quality_checks=list(VISUAL_CHECKS))
     return record
 
@@ -441,4 +442,6 @@ def finalize(plan, inspection, review, images):
             "png_count": 5, "near_count": 3, "far_count": 2, "pair_count": 10,
             "hidden_model_calls": 0, "quality_checks": list(VISUAL_CHECKS),
             "recognized_targets": plan["recognized_targets"], "inspection": inspection,
+            "normalization_audit": plan.get("normalization_audit", []),
+            "recognition_review": plan.get("recognition_review"),
             "visual_review": decode(review)}

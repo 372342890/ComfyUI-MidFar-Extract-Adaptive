@@ -22,6 +22,7 @@ from .five_quality_nodes import (
     BAMidFarFivePlan, BAMidFarFiveReference, BAMidFarFiveInspect,
     BAMidFarFiveRetry, BAMidFarFiveSelect, BAMidFarFiveFinal,
 )
+from .recognition_nodes import BAMidFarRecognitionContext, BAMidFarRecognitionFinal
 
 
 class BAMidFarPlanPrompt:
@@ -294,6 +295,8 @@ class BAMidFarSelectedMatte:
 
 
 NODE_CLASS_MAPPINGS = {
+    "BAMidFarRecognitionContext": BAMidFarRecognitionContext,
+    "BAMidFarRecognitionFinal": BAMidFarRecognitionFinal,
     "BAMidFarFivePlan": BAMidFarFivePlan,
     "BAMidFarFiveReference": BAMidFarFiveReference,
     "BAMidFarFiveInspect": BAMidFarFiveInspect,
@@ -339,6 +342,8 @@ NODE_CLASS_MAPPINGS = {
     "BAMidFarAdaptivePNG": BAMidFarAdaptivePNG,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
+    "BAMidFarRecognitionContext": "五路识别诊断 · 当前原图绑定与解析反馈",
+    "BAMidFarRecognitionFinal": "五路自然组准入 · 原图复核及十对分离",
     "BAMidFarFivePlan": "五路PE准入 · 三近两远与造型锁定",
     "BAMidFarFiveReference": "五路当前原图定位 · 动态局部参考",
     "BAMidFarFiveInspect": "五路数值检查 · 原图成图对照",

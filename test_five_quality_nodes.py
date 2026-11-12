@@ -118,11 +118,15 @@ class FiveQualityNodes(unittest.TestCase):
 
     def execute_graph(self, fail_first=(), fail_second=()):
         from five_quality_workflow import build_quality_workflow
+        from test_recognition_contract import grouped
+        from test_recognition_nodes import node_module as recognition_module
+        review_nodes = recognition_module()
         graph = build_quality_workflow(filename_prefix="test/native")
         nodes = {n["id"]: n for n in graph["nodes"]}
         edges = {(e["target"], e["targetHandle"]): (e["source"], e["sourceHandle"])
                  for e in graph["edges"]}
-        raw, pe = contracts()
+        _, pe = contracts()
+        raw = grouped()
         cache, called = {}, []
         def execute(identifier):
             if identifier in cache:
@@ -144,6 +148,12 @@ class FiveQualityNodes(unittest.TestCase):
                 elif identifier == "3":
                     input_value("text")
                     values = (json.dumps(pe),)
+                elif identifier == "38":
+                    input_value("image")
+                    binding = json.loads(execute("37")["context"])
+                    values = (json.dumps({"source_hash": binding["source_hash"],
+                                          "review_id": binding["review_id"],
+                                          "recognition": raw}),)
                 else:
                     input_value("image")
                     context = json.loads(input_value("text").split("本轮上下文：", 1)[1])
@@ -162,7 +172,8 @@ class FiveQualityNodes(unittest.TestCase):
             elif kind == "BAMidFarActivePrompt":
                 values = (input_value("prompt"),)
             else:
-                instance = getattr(self.nodes, kind)()
+                module = review_nodes if kind.startswith("BAMidFarRecognition") else self.nodes
+                instance = getattr(module, kind)()
                 types_ = instance.INPUT_TYPES()["required"]
                 kwargs = {pin: input_value(pin) for pin, definition in types_.items()
                           if len(definition) < 2 or not definition[1].get("lazy")}

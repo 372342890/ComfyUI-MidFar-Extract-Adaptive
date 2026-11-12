@@ -63,15 +63,30 @@ class FiveQualityWorkflow(unittest.TestCase):
 
     def test_text_budget_and_expected_quality_rules_visible(self):
         models = [n for n in self.graph["nodes"] if n["data"]["type"] == "BALLMText"]
-        self.assertEqual(len(models), 4)
+        self.assertEqual(len(models), 5)
         for node in models:
             self.assertGreaterEqual(node["data"]["extra"]["model"]["max_tokens"], 12000)
             self.assertGreaterEqual(node["data"]["extra"]["modelConfig"]["max_tokens"]["value"], 12000)
+            self.assertEqual(node["data"]["extra"]["model"]["thinking"]["type"], "disabled")
         text = json.dumps(self.graph, ensure_ascii=False)
         self.assertIn("三个近景", text)
         self.assertIn("两个远景", text)
         self.assertIn("至少三", text)
         self.assertIn("不拔尖", text)
+
+    def test_recognition_review_is_visible_and_must_precede_pe_and_plan(self):
+        nodes = {n["id"]: n["data"]["type"] for n in self.graph["nodes"]}
+        self.assertEqual(nodes.get("37"), "BAMidFarRecognitionContext")
+        self.assertEqual(nodes.get("38"), "BALLMText")
+        self.assertEqual(nodes.get("39"), "BAMidFarRecognitionFinal")
+        edges = {(e["source"], e["target"], e["targetHandle"]) for e in self.graph["edges"]}
+        for edge in (("2", "37", "recognition"), ("1", "37", "reference"),
+                     ("37", "38", "text"), ("37", "38", "image"),
+                     ("38", "39", "review"), ("1", "39", "reference"),
+                     ("37", "39", "context"), ("39", "3", "text"),
+                     ("39", "4", "recognition")):
+            self.assertIn(edge, edges)
+        self.assertNotIn(("2", "3", "text"), edges)
 
 
 if __name__ == "__main__":

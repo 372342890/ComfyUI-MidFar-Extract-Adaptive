@@ -74,7 +74,7 @@
             "name": "user_prompt",
             "label": "user_prompt",
             "type": "STRING",
-            "value": "你是游戏场景原图资产识别助手。本轮需求：三个山体（近景），加两个远景山脉，统一五路提取并跨路查重。\n只观察当前原图，分别盘点近景与远景，不预设实际够数。\n山体：前三路是靠近场景前方的近景山岩资产，包含山峰、連体山群和具有独立雪顶/岩阶轮廓的宽岩台，当前节点距离层记为midground。不同位置、不同自然单元；不要求每路都是孤立山峰。禁止选background远景山体或远景独立小山补位。\n山脉：最多两个远处连续的多峰山脊或长山脉，具有自身可见连续岩土/雪脊连接和自然两端；保留远景低对比蓝灰色空气透视，不能拿前两类山体扩大画布冒充山脉。\n先统一列出自然单元，再分为role=mountain或range；同一unit_id只能使用一次。前后重叠不同深度不算连接；同一连续双峰、主峰与岩肩必须整组作为一个单元。山脉不能包含前三路山体，两个山脉不能共享同一段主峰。位置、轮廓、峰数、天然连接、岩阶和色调必须分别描述。\n不要提取前景散石、科考站、卫星天线、地面托盘、整个雪原、天空、左右被画面截断的整层背景。可见近景岩台只有末端被边缘截到时，可以限定为可见岩台资产，仅自然收束截断末端，不延展整层台地或新添峰。此类目标kind=rock、boundary_cut=true、completion_policy=\"close_visible_rock_edge\"，不得伪报完整原图边界。可以补被挡住的短自然山脚，不能臆造画面外整条山脉。若某类确实没有可见独立资产，输出实际数量并说明缺口，不能拆份或换编号凑数。\n输出合法JSON对象：style、shortfall、objects。objects先最多3个mountain，再最多2个range。\n每项包含id、unit_id（安全英文编号）、name、role（mountain/range）、kind（mountain或rock）、layer（mountain必须midground，range必须background）、location、appearance、occlusion、connected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy。\nlocation描述在完整原图中的唯一位置与邻近参照，appearance详细描述原图可见峰形与相连轮廓；connected_parts和excluded_objects是字符串数组。完整自然单元is_single=true、suitable=true、boundary_cut=false。不要输出Markdown或注释。\n【恢复原PE造型限制】至少三处可直接对照原图核实的独有中大尺度锚点，\n不能用细碎纹理、小石头或噪点充数。按左端→左肩→主高点→鞍部/凹口→\n次高点/岩阶→右端描述有序轮廓；没有的项写无，不固定峰数。\n保留主次高点比例、峰间距、陡缓坡、凸肩岩阶、两端收势及高低疏密节奏，\n禁止泛化为圆包、单坡或均匀重复峰列。\n本组岩土连接必须有原图证据，雪地、共同背景、遮挡或投影重叠不能算连接。\n不可删除连接段：相接山肩、低肩、鞍部下方岩土、共有岩基和天然山脚；\n不挖穿背景缝，不断脊、不悬空、不切散，不焊接原本分離的邻山。\n保留原图实际尖钝、宽厚根部和真实棱角：不拔尖、不拉高、不削薄、\n不强化密集锯齿或细长针柱，不统一圆丘化。\n逐一对其他四路至少写三项中大尺度结构差异；位置、颜色、光照、镜像、\n整体尺寸和细纹不能算独立结构差异。不共享主峰、不拆同组、不局部包含。\n成图缺少任一锚点、轮廓不清晰、没有起伏节奏、真实连接断开或被额外拔尖，\n都判本路失败，重新提取同一目标。完整居中，宽高各不超过画布70%，\n四侧至少15%空白，保持原投影宽高比，仅整体等比缩放。\n【本完整自动链路的额外JSON字段，以本段为准】\n期望恰好三个近景mountain、两个远景range，确实不足时输出实际数及shortfall。\n在原有每项目标字段上增加：\nbbox=[left,top,right,bottom]，target_point=[x,y]，均为当前整张原图0..1归一化坐标；\nbbox完整覆盖可见自然单元，target_point落在目标自身岩体，不能落在天空或遮挡物；\nlandmarks至少3项，每项{name:\"本目标内唯一锚点名\",shape:\"具体中大尺度造型\",point:[x,y]}，\npoint用整张原图0..1，须在bbox内。至少三个不同造型及不同点，不使用细纹充数；\ncontour_fingerprint为至少4项从左到右有序的真实轮廓描述字符串数组；\nrhythm为具体高低、峰间距、宽厚和转折节奏的文本。\nconnected_parts至少一项可证明的本组岩土连接；单峰也描述坡身和自身岩基连接。\n不输出示例坐标或旧图信息。全部字段必须来自当前图，不能通过填字段伪装合格。"
+            "value": "你是游戏场景原图资产识别助手。本轮需求：三个山体（近景），加两个远景山脉，统一五路提取并跨路查重。\n只观察当前原图，分别盘点近景与远景，不预设实际够数。\n山体：前三路是靠近场景前方的近景山岩资产，包含山峰、連体山群和具有独立雪顶/岩阶轮廓的宽岩台，当前节点距离层记为midground。不同位置、不同自然单元；不要求每路都是孤立山峰。禁止选background远景山体或远景独立小山补位。\n山脉：最多两个远处连续的多峰山脊或长山脉，具有自身可见连续岩土/雪脊连接和自然两端；保留远景低对比蓝灰色空气透视，不能拿前两类山体扩大画布冒充山脉。\n先统一列出自然单元，再分为role=mountain或range；同一unit_id只能使用一次。前后重叠不同深度不算连接；同一连续双峰、主峰与岩肩必须整组作为一个单元。山脉不能包含前三路山体，两个山脉不能共享同一段主峰。位置、轮廓、峰数、天然连接、岩阶和色调必须分别描述。\n不要提取前景散石、科考站、卫星天线、地面托盘、整个雪原、天空、左右被画面截断的整层背景。可见近景岩台只有末端被边缘截到时，可以限定为可见岩台资产，仅自然收束截断末端，不延展整层台地或新添峰。此类目标kind=rock、boundary_cut=true、completion_policy=\"close_visible_rock_edge\"，不得伪报完整原图边界。可以补被挡住的短自然山脚，不能臆造画面外整条山脉。若某类确实没有可见独立资产，输出实际数量并说明缺口，不能拆份或换编号凑数。\n输出合法JSON对象：style、shortfall、objects。objects先最多3个mountain，再最多2个range。\n每项包含id、unit_id（安全英文编号）、name、role（mountain/range）、kind（mountain或rock）、layer（mountain必须midground，range必须background）、location、appearance、occlusion、connected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy。\nlocation描述在完整原图中的唯一位置与邻近参照，appearance详细描述原图可见峰形与相连轮廓；connected_parts和excluded_objects是字符串数组。完整自然单元is_single=true、suitable=true、boundary_cut=false。不要输出Markdown或注释。\n【恢复原PE造型限制】至少三处可直接对照原图核实的独有中大尺度锚点，\n不能用细碎纹理、小石头或噪点充数。按左端→左肩→主高点→鞍部/凹口→\n次高点/岩阶→右端描述有序轮廓；没有的项写无，不固定峰数。\n保留主次高点比例、峰间距、陡缓坡、凸肩岩阶、两端收势及高低疏密节奏，\n禁止泛化为圆包、单坡或均匀重复峰列。\n本组岩土连接必须有原图证据，雪地、共同背景、遮挡或投影重叠不能算连接。\n不可删除连接段：相接山肩、低肩、鞍部下方岩土、共有岩基和天然山脚；\n不挖穿背景缝，不断脊、不悬空、不切散，不焊接原本分離的邻山。\n保留原图实际尖钝、宽厚根部和真实棱角：不拔尖、不拉高、不削薄、\n不强化密集锯齿或细长针柱，不统一圆丘化。\n逐一对其他四路至少写三项中大尺度结构差异；位置、颜色、光照、镜像、\n整体尺寸和细纹不能算独立结构差异。不共享主峰、不拆同组、不局部包含。\n成图缺少任一锚点、轮廓不清晰、没有起伏节奏、真实连接断开或被额外拔尖，\n都判本路失败，重新提取同一目标。完整居中，宽高各不超过画布70%，\n四侧至少15%空白，保持原投影宽高比，仅整体等比缩放。\n【本完整自动链路的额外JSON字段，以本段为准】\n期望恰好三个近景mountain、两个远景range，确实不足时输出实际数及shortfall。\n在原有每项目标字段上增加：\nbbox=[left,top,right,bottom]，target_point=[x,y]，均为当前整张原图0..1归一化坐标；\nbbox完整覆盖可见自然单元，target_point落在目标自身岩体，不能落在天空或遮挡物；\nlandmarks至少3项，每项{name:\"本目标内唯一锚点名\",shape:\"具体中大尺度造型\",point:[x,y]}，\npoint用整张原图0..1，须在bbox内。至少三个不同造型及不同点，不使用细纹充数；\ncontour_fingerprint为至少4项从左到右有序的真实轮廓描述字符串数组；\nrhythm为具体高低、峰间距、宽厚和转折节奏的文本。\nconnected_parts至少一项可证明的本组岩土连接；单峰也描述坡身和自身岩基连接。\n不输出示例坐标或旧图信息。全部字段必须来自当前图，不能通过填字段伪装合格。\n【自然组契约 natural-units-v1】\n只输出一个完整JSON对象，不写思考过程、Markdown、注释、算式或重复字段。\nid使用英文字符串，每个unit_id唯一；坐标统一coordinate_space=\"normalized\"，所有bbox、\ntarget_point和landmarks.point均为完整原图0..1数值，先计算数值，不输出除法。\ngrouping_contract=\"natural-units-v1\"。每个objects目标新增component_ids英文字符串数组，\n同一实际岩峰、岩肩、岩基组成部分只能属于一个自然组；不把连体双峰按左右拆路。\nis_single=true代表整个自然单元，即使它有多个相连峰。不同深度投影重叠不是连接。\ngroup_relations完整列出五个目标全部十对，每项：\n{\"ids\":[\"实际id1\",\"实际id2\"],\"relation\":\"separated或separate_depth\",\"evidence\":\"当前图可见分界\"}\n只有确实不同深度才用separate_depth；同深度用可见雪谷/间隙等岩土分离证据。\n若存在真实连接，先合并该自然单元、重新选其他独立目标；不得把connected改成\nseparated凑数。无完整五组时输出实际数量与shortfall，不能臆造补位。\nclose_visible_rock_edge仅可用于kind=rock、role=mountain且boundary_cut=true的近景岩台末端；\n完整山峰/远景山脉不得使用该策略。其余目标completion_policy=\"short_occluded_foot\"。\n各目标仍完整提供name、role、kind、layer、location、appearance、occlusion、\nconnected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy、\nbbox、target_point、至少3个landmarks{name,shape,point}、至少4项contour_fingerprint和rhythm。\nstyle与shortfall仍保留。描述具体简洁，每条证据30字左右；优先完整输出全部字段。\n"
           }
         ],
         "outputSlots": [
@@ -211,7 +211,10 @@
             "support_multi_prompt_input": true,
             "support_multimodal": false,
             "support_vision_status": 2,
-            "vision_model": "Doubao-Seed-2.1-pro"
+            "vision_model": "Doubao-Seed-2.1-pro",
+            "thinking": {
+              "type": "disabled"
+            }
           },
           "modelConfig": {
             "thinking": {
@@ -517,6 +520,150 @@
                   "text": "不输出示例坐标或旧图信息。全部字段必须来自当前图，不能通过填字段伪装合格。"
                 }
               ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "【自然组契约 natural-units-v1】"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "只输出一个完整JSON对象，不写思考过程、Markdown、注释、算式或重复字段。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "id使用英文字符串，每个unit_id唯一；坐标统一coordinate_space=\"normalized\"，所有bbox、"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "target_point和landmarks.point均为完整原图0..1数值，先计算数值，不输出除法。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "grouping_contract=\"natural-units-v1\"。每个objects目标新增component_ids英文字符串数组，"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "同一实际岩峰、岩肩、岩基组成部分只能属于一个自然组；不把连体双峰按左右拆路。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "is_single=true代表整个自然单元，即使它有多个相连峰。不同深度投影重叠不是连接。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "group_relations完整列出五个目标全部十对，每项："
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "{\"ids\":[\"实际id1\",\"实际id2\"],\"relation\":\"separated或separate_depth\",\"evidence\":\"当前图可见分界\"}"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "只有确实不同深度才用separate_depth；同深度用可见雪谷/间隙等岩土分离证据。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "若存在真实连接，先合并该自然单元、重新选其他独立目标；不得把connected改成"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "separated凑数。无完整五组时输出实际数量与shortfall，不能臆造补位。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "close_visible_rock_edge仅可用于kind=rock、role=mountain且boundary_cut=true的近景岩台末端；"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "完整山峰/远景山脉不得使用该策略。其余目标completion_policy=\"short_occluded_foot\"。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "各目标仍完整提供name、role、kind、layer、location、appearance、occlusion、"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "connected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy、"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "bbox、target_point、至少3个landmarks{name,shape,point}、至少4项contour_fingerprint和rhythm。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "style与shortfall仍保留。描述具体简洁，每条证据30字左右；优先完整输出全部字段。"
+                }
+              ]
             }
           ]
         }
@@ -696,7 +843,10 @@
             "support_multi_prompt_input": true,
             "support_multimodal": false,
             "support_vision_status": 2,
-            "vision_model": "Doubao-Seed-2.1-pro"
+            "vision_model": "Doubao-Seed-2.1-pro",
+            "thinking": {
+              "type": "disabled"
+            }
           },
           "modelConfig": {
             "thinking": {
@@ -1121,6 +1271,328 @@
         "extra": {
           "output_preview_names": [
             "plan"
+          ]
+        }
+      }
+    },
+    {
+      "id": "37",
+      "type": "baNode",
+      "position": {
+        "x": 460,
+        "y": 3700
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarRecognitionContext",
+        "title": "②a 解析诊断 · 绑定当前原图与候选自然组",
+        "inputs": [
+          {
+            "name": "reference",
+            "label": "reference",
+            "type": "IMAGE",
+            "format": "slot"
+          },
+          {
+            "name": "recognition",
+            "label": "recognition",
+            "type": "STRING",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "review_prompt",
+            "label": "review_prompt",
+            "type": "STRING"
+          },
+          {
+            "name": "reference",
+            "label": "reference",
+            "type": "IMAGE"
+          },
+          {
+            "name": "context",
+            "label": "context",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "initialWidth": 420,
+      "initialHeight": 650,
+      "id": "38",
+      "width": 420,
+      "data": {
+        "title": "②b 原图分组复核 · 同图重新观察一次",
+        "type": "BALLMText",
+        "inputs": [
+          {
+            "name": "text",
+            "label": "文本",
+            "type": "STRING",
+            "format": "slot"
+          },
+          {
+            "name": "image",
+            "label": "图片",
+            "type": "IMAGE",
+            "format": "slot"
+          },
+          {
+            "name": "model",
+            "label": "model",
+            "type": "STRING",
+            "value": ""
+          },
+          {
+            "name": "user_prompt",
+            "label": "user_prompt",
+            "type": "STRING",
+            "value": "按连接的当前原图与复核提示词重新识别完整自然组，只输出完整JSON。"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "text",
+            "type": "STRING",
+            "label": "文本"
+          }
+        ],
+        "extra": {
+          "model": {
+            "cover_url": "https://p11-chimera.byteimg.com/tos-cn-i-tl5fq5atma/ba_model_cover/doubao.png~tplv-tl5fq5atma-image.webp",
+            "key": "Doubao-Seed-2.1-pro",
+            "max_tokens": 16000,
+            "model": "Doubao-Seed-2.1-pro",
+            "name": "豆包2.1 pro",
+            "name_en": "Doubao 2.1 pro",
+            "origin": "egress",
+            "schema": [
+              {
+                "default_value": "false",
+                "format": "select",
+                "internal_name": "thinking",
+                "json_path": "thinking.type",
+                "label": "thinking",
+                "name": "thinking",
+                "omitempty": false,
+                "props": {
+                  "enums": [
+                    {
+                      "label": "false",
+                      "value": "disabled"
+                    },
+                    {
+                      "label": "true",
+                      "value": "enabled"
+                    }
+                  ],
+                  "required": false,
+                  "support_smart_duration": null
+                },
+                "tips": "是否开启深度思考模式",
+                "type": "string",
+                "visible": true
+              },
+              {
+                "default_value": 1000,
+                "format": "input_number",
+                "internal_name": "max_tokens",
+                "json_path": "max_tokens",
+                "label": "最大回复长度",
+                "name": "max_tokens",
+                "omitempty": false,
+                "props": {
+                  "max": 256000,
+                  "min": 1,
+                  "precision": 0,
+                  "required": false,
+                  "support_smart_duration": null
+                },
+                "show_switch": true,
+                "switch_value": true,
+                "tips": "可控制模型回复的最多 Token 数量，以满足不同场景和需求。通常 100 Tokens 约等于 60 个中文汉字。",
+                "type": "int",
+                "visible": true
+              },
+              {
+                "default_value": 1,
+                "format": "input_number",
+                "internal_name": "temperature",
+                "json_path": "temperature",
+                "label": "温度",
+                "name": "temperature",
+                "omitempty": false,
+                "props": {
+                  "max": 2,
+                  "min": 0,
+                  "precision": 1,
+                  "required": false,
+                  "support_smart_duration": null
+                },
+                "show_switch": true,
+                "switch_value": true,
+                "tips": "温度控制随机性。较低的温度会导致较少的随机完成。随着温度接近零，模型将变得确定性和重复性。较高的温度会导致更多的随机完成。",
+                "type": "float32",
+                "visible": true
+              },
+              {
+                "default_value": 0.7,
+                "format": "input_number",
+                "internal_name": "top_p",
+                "json_path": "top_p",
+                "label": "Top P",
+                "name": "top_p",
+                "omitempty": false,
+                "props": {
+                  "max": 1,
+                  "min": 0,
+                  "precision": 1,
+                  "required": false,
+                  "support_smart_duration": null
+                },
+                "show_switch": true,
+                "switch_value": false,
+                "tips": "通过核心采样控制多样性：0.5表示考虑了一半的所有可能性加权选项。",
+                "type": "float32",
+                "visible": true
+              },
+              {
+                "default_value": -1,
+                "format": "input_seed",
+                "internal_name": "seed",
+                "json_path": "seed",
+                "label": "seed",
+                "name": "seed",
+                "omitempty": false,
+                "props": {
+                  "max": 2147483647,
+                  "min": -1,
+                  "required": false,
+                  "support_smart_duration": null
+                },
+                "tips": "seed",
+                "type": "int",
+                "visible": true
+              }
+            ],
+            "support_input_types": [
+              "text",
+              "image",
+              "video"
+            ],
+            "support_multi_image_input": true,
+            "support_multi_prompt_input": true,
+            "support_multimodal": false,
+            "support_vision_status": 2,
+            "vision_model": "Doubao-Seed-2.1-pro",
+            "thinking": {
+              "type": "disabled"
+            }
+          },
+          "modelConfig": {
+            "thinking": {
+              "switch": true,
+              "value": "disabled"
+            },
+            "max_tokens": {
+              "switch": true,
+              "value": 16000
+            },
+            "temperature": {
+              "switch": true,
+              "value": 0.1
+            },
+            "system_prompt": {
+              "switch": true,
+              "value": "按当前图片与连接文本严谨判断。只输出要求的合法JSON，无代码围栏。"
+            }
+          },
+          "output_preview_names": [
+            "text"
+          ],
+          "uiHeightMap": {
+            "user_prompt": 240
+          },
+          "user_prompt": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "按连接的当前原图与复核提示词重新识别完整自然组，只输出完整JSON。"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "position": {
+        "x": 940,
+        "y": 3700
+      },
+      "type": "baNode",
+      "selected": false
+    },
+    {
+      "id": "39",
+      "type": "baNode",
+      "position": {
+        "x": 1420,
+        "y": 3700
+      },
+      "width": 420,
+      "initialWidth": 420,
+      "initialHeight": 500,
+      "selected": false,
+      "data": {
+        "type": "BAMidFarRecognitionFinal",
+        "title": "②c 自然组准入 · 十对分离与坐标合法性",
+        "inputs": [
+          {
+            "name": "reference",
+            "label": "reference",
+            "type": "IMAGE",
+            "format": "slot"
+          },
+          {
+            "name": "context",
+            "label": "context",
+            "type": "STRING",
+            "format": "slot"
+          },
+          {
+            "name": "review",
+            "label": "review",
+            "type": "STRING",
+            "format": "slot"
+          }
+        ],
+        "outputSlots": [
+          {
+            "name": "recognition",
+            "label": "recognition",
+            "type": "STRING"
+          },
+          {
+            "name": "review_record",
+            "label": "review_record",
+            "type": "STRING"
+          }
+        ],
+        "extra": {
+          "output_preview_names": [
+            "recognition",
+            "review_record"
           ]
         }
       }
@@ -8391,7 +8863,10 @@
             "support_multi_prompt_input": true,
             "support_multimodal": false,
             "support_vision_status": 2,
-            "vision_model": "Doubao-Seed-2.1-pro"
+            "vision_model": "Doubao-Seed-2.1-pro",
+            "thinking": {
+              "type": "disabled"
+            }
           },
           "modelConfig": {
             "thinking": {
@@ -8874,7 +9349,10 @@
             "support_multi_prompt_input": true,
             "support_multimodal": false,
             "support_vision_status": 2,
-            "vision_model": "Doubao-Seed-2.1-pro"
+            "vision_model": "Doubao-Seed-2.1-pro",
+            "thinking": {
+              "type": "disabled"
+            }
           },
           "modelConfig": {
             "thinking": {
@@ -9082,8 +9560,120 @@
     {
       "id": "quality-2",
       "type": "baEdge",
+      "source": "1",
+      "sourceHandle": "IMAGE",
+      "target": "37",
+      "targetHandle": "reference",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-3",
+      "type": "baEdge",
       "source": "2",
       "sourceHandle": "text",
+      "target": "37",
+      "targetHandle": "recognition",
+      "data": {
+        "type": "STRING",
+        "sourceType": "STRING",
+        "targetType": "STRING",
+        "extra": {
+          "type": "STRING"
+        }
+      }
+    },
+    {
+      "id": "quality-4",
+      "type": "baEdge",
+      "source": "37",
+      "sourceHandle": "review_prompt",
+      "target": "38",
+      "targetHandle": "text",
+      "data": {
+        "type": "STRING",
+        "sourceType": "STRING",
+        "targetType": "STRING",
+        "extra": {
+          "type": "STRING"
+        }
+      }
+    },
+    {
+      "id": "quality-5",
+      "type": "baEdge",
+      "source": "37",
+      "sourceHandle": "reference",
+      "target": "38",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-6",
+      "type": "baEdge",
+      "source": "1",
+      "sourceHandle": "IMAGE",
+      "target": "39",
+      "targetHandle": "reference",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-7",
+      "type": "baEdge",
+      "source": "37",
+      "sourceHandle": "context",
+      "target": "39",
+      "targetHandle": "context",
+      "data": {
+        "type": "STRING",
+        "sourceType": "STRING",
+        "targetType": "STRING",
+        "extra": {
+          "type": "STRING"
+        }
+      }
+    },
+    {
+      "id": "quality-8",
+      "type": "baEdge",
+      "source": "38",
+      "sourceHandle": "text",
+      "target": "39",
+      "targetHandle": "review",
+      "data": {
+        "type": "STRING",
+        "sourceType": "STRING",
+        "targetType": "STRING",
+        "extra": {
+          "type": "STRING"
+        }
+      }
+    },
+    {
+      "id": "quality-9",
+      "type": "baEdge",
+      "source": "39",
+      "sourceHandle": "recognition",
       "target": "3",
       "targetHandle": "text",
       "data": {
@@ -9096,7 +9686,7 @@
       }
     },
     {
-      "id": "quality-3",
+      "id": "quality-10",
       "type": "baEdge",
       "source": "1",
       "sourceHandle": "IMAGE",
@@ -9112,10 +9702,10 @@
       }
     },
     {
-      "id": "quality-4",
+      "id": "quality-11",
       "type": "baEdge",
-      "source": "2",
-      "sourceHandle": "text",
+      "source": "39",
+      "sourceHandle": "recognition",
       "target": "4",
       "targetHandle": "recognition",
       "data": {
@@ -9128,7 +9718,7 @@
       }
     },
     {
-      "id": "quality-5",
+      "id": "quality-12",
       "type": "baEdge",
       "source": "3",
       "sourceHandle": "text",
@@ -9144,7 +9734,7 @@
       }
     },
     {
-      "id": "quality-6",
+      "id": "quality-13",
       "type": "baEdge",
       "source": "1",
       "sourceHandle": "IMAGE",
@@ -9160,7 +9750,7 @@
       }
     },
     {
-      "id": "quality-7",
+      "id": "quality-14",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "target_1",
@@ -9176,7 +9766,7 @@
       }
     },
     {
-      "id": "quality-8",
+      "id": "quality-15",
       "type": "baEdge",
       "source": "10",
       "sourceHandle": "crop",
@@ -9192,7 +9782,7 @@
       }
     },
     {
-      "id": "quality-9",
+      "id": "quality-16",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "prompt_1",
@@ -9208,7 +9798,7 @@
       }
     },
     {
-      "id": "quality-10",
+      "id": "quality-17",
       "type": "baEdge",
       "source": "10",
       "sourceHandle": "crop",
@@ -9224,7 +9814,7 @@
       }
     },
     {
-      "id": "quality-11",
+      "id": "quality-18",
       "type": "baEdge",
       "source": "20",
       "sourceHandle": "prompt",
@@ -9240,7 +9830,7 @@
       }
     },
     {
-      "id": "quality-12",
+      "id": "quality-19",
       "type": "baEdge",
       "source": "1",
       "sourceHandle": "IMAGE",
@@ -9256,7 +9846,7 @@
       }
     },
     {
-      "id": "quality-13",
+      "id": "quality-20",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "target_2",
@@ -9272,7 +9862,7 @@
       }
     },
     {
-      "id": "quality-14",
+      "id": "quality-21",
       "type": "baEdge",
       "source": "11",
       "sourceHandle": "crop",
@@ -9288,7 +9878,7 @@
       }
     },
     {
-      "id": "quality-15",
+      "id": "quality-22",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "prompt_2",
@@ -9304,7 +9894,7 @@
       }
     },
     {
-      "id": "quality-16",
+      "id": "quality-23",
       "type": "baEdge",
       "source": "11",
       "sourceHandle": "crop",
@@ -9320,7 +9910,7 @@
       }
     },
     {
-      "id": "quality-17",
+      "id": "quality-24",
       "type": "baEdge",
       "source": "21",
       "sourceHandle": "prompt",
@@ -9336,7 +9926,7 @@
       }
     },
     {
-      "id": "quality-18",
+      "id": "quality-25",
       "type": "baEdge",
       "source": "1",
       "sourceHandle": "IMAGE",
@@ -9352,7 +9942,7 @@
       }
     },
     {
-      "id": "quality-19",
+      "id": "quality-26",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "target_3",
@@ -9368,7 +9958,7 @@
       }
     },
     {
-      "id": "quality-20",
+      "id": "quality-27",
       "type": "baEdge",
       "source": "12",
       "sourceHandle": "crop",
@@ -9384,7 +9974,7 @@
       }
     },
     {
-      "id": "quality-21",
+      "id": "quality-28",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "prompt_3",
@@ -9400,7 +9990,7 @@
       }
     },
     {
-      "id": "quality-22",
+      "id": "quality-29",
       "type": "baEdge",
       "source": "12",
       "sourceHandle": "crop",
@@ -9416,7 +10006,7 @@
       }
     },
     {
-      "id": "quality-23",
+      "id": "quality-30",
       "type": "baEdge",
       "source": "22",
       "sourceHandle": "prompt",
@@ -9432,7 +10022,7 @@
       }
     },
     {
-      "id": "quality-24",
+      "id": "quality-31",
       "type": "baEdge",
       "source": "1",
       "sourceHandle": "IMAGE",
@@ -9448,7 +10038,7 @@
       }
     },
     {
-      "id": "quality-25",
+      "id": "quality-32",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "target_4",
@@ -9464,7 +10054,7 @@
       }
     },
     {
-      "id": "quality-26",
+      "id": "quality-33",
       "type": "baEdge",
       "source": "13",
       "sourceHandle": "crop",
@@ -9480,7 +10070,7 @@
       }
     },
     {
-      "id": "quality-27",
+      "id": "quality-34",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "prompt_4",
@@ -9496,7 +10086,7 @@
       }
     },
     {
-      "id": "quality-28",
+      "id": "quality-35",
       "type": "baEdge",
       "source": "13",
       "sourceHandle": "crop",
@@ -9512,7 +10102,7 @@
       }
     },
     {
-      "id": "quality-29",
+      "id": "quality-36",
       "type": "baEdge",
       "source": "23",
       "sourceHandle": "prompt",
@@ -9528,7 +10118,7 @@
       }
     },
     {
-      "id": "quality-30",
+      "id": "quality-37",
       "type": "baEdge",
       "source": "1",
       "sourceHandle": "IMAGE",
@@ -9544,7 +10134,7 @@
       }
     },
     {
-      "id": "quality-31",
+      "id": "quality-38",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "target_5",
@@ -9560,7 +10150,7 @@
       }
     },
     {
-      "id": "quality-32",
+      "id": "quality-39",
       "type": "baEdge",
       "source": "14",
       "sourceHandle": "crop",
@@ -9576,7 +10166,7 @@
       }
     },
     {
-      "id": "quality-33",
+      "id": "quality-40",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "prompt_5",
@@ -9592,7 +10182,7 @@
       }
     },
     {
-      "id": "quality-34",
+      "id": "quality-41",
       "type": "baEdge",
       "source": "14",
       "sourceHandle": "crop",
@@ -9608,7 +10198,7 @@
       }
     },
     {
-      "id": "quality-35",
+      "id": "quality-42",
       "type": "baEdge",
       "source": "24",
       "sourceHandle": "prompt",
@@ -9624,135 +10214,135 @@
       }
     },
     {
-      "id": "quality-36",
-      "type": "baEdge",
-      "source": "1",
-      "sourceHandle": "IMAGE",
-      "target": "30",
-      "targetHandle": "reference",
-      "data": {
-        "type": "IMAGE",
-        "sourceType": "IMAGE",
-        "targetType": "IMAGE",
-        "extra": {
-          "type": "IMAGE"
-        }
-      }
-    },
-    {
-      "id": "quality-37",
-      "type": "baEdge",
-      "source": "4",
-      "sourceHandle": "plan",
-      "target": "30",
-      "targetHandle": "plan",
-      "data": {
-        "type": "STRING",
-        "sourceType": "STRING",
-        "targetType": "STRING",
-        "extra": {
-          "type": "STRING"
-        }
-      }
-    },
-    {
-      "id": "quality-38",
-      "type": "baEdge",
-      "source": "30",
-      "sourceHandle": "review_sheet",
-      "target": "31",
-      "targetHandle": "image",
-      "data": {
-        "type": "IMAGE",
-        "sourceType": "IMAGE",
-        "targetType": "IMAGE",
-        "extra": {
-          "type": "IMAGE"
-        }
-      }
-    },
-    {
-      "id": "quality-39",
-      "type": "baEdge",
-      "source": "30",
-      "sourceHandle": "review_prompt",
-      "target": "31",
-      "targetHandle": "text",
-      "data": {
-        "type": "STRING",
-        "sourceType": "STRING",
-        "targetType": "STRING",
-        "extra": {
-          "type": "STRING"
-        }
-      }
-    },
-    {
-      "id": "quality-40",
-      "type": "baEdge",
-      "source": "1",
-      "sourceHandle": "IMAGE",
-      "target": "34",
-      "targetHandle": "reference",
-      "data": {
-        "type": "IMAGE",
-        "sourceType": "IMAGE",
-        "targetType": "IMAGE",
-        "extra": {
-          "type": "IMAGE"
-        }
-      }
-    },
-    {
-      "id": "quality-41",
-      "type": "baEdge",
-      "source": "4",
-      "sourceHandle": "plan",
-      "target": "34",
-      "targetHandle": "plan",
-      "data": {
-        "type": "STRING",
-        "sourceType": "STRING",
-        "targetType": "STRING",
-        "extra": {
-          "type": "STRING"
-        }
-      }
-    },
-    {
-      "id": "quality-42",
-      "type": "baEdge",
-      "source": "34",
-      "sourceHandle": "review_sheet",
-      "target": "35",
-      "targetHandle": "image",
-      "data": {
-        "type": "IMAGE",
-        "sourceType": "IMAGE",
-        "targetType": "IMAGE",
-        "extra": {
-          "type": "IMAGE"
-        }
-      }
-    },
-    {
       "id": "quality-43",
       "type": "baEdge",
-      "source": "34",
-      "sourceHandle": "review_prompt",
-      "target": "35",
-      "targetHandle": "text",
+      "source": "1",
+      "sourceHandle": "IMAGE",
+      "target": "30",
+      "targetHandle": "reference",
       "data": {
-        "type": "STRING",
-        "sourceType": "STRING",
-        "targetType": "STRING",
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
         "extra": {
-          "type": "STRING"
+          "type": "IMAGE"
         }
       }
     },
     {
       "id": "quality-44",
+      "type": "baEdge",
+      "source": "4",
+      "sourceHandle": "plan",
+      "target": "30",
+      "targetHandle": "plan",
+      "data": {
+        "type": "STRING",
+        "sourceType": "STRING",
+        "targetType": "STRING",
+        "extra": {
+          "type": "STRING"
+        }
+      }
+    },
+    {
+      "id": "quality-45",
+      "type": "baEdge",
+      "source": "30",
+      "sourceHandle": "review_sheet",
+      "target": "31",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-46",
+      "type": "baEdge",
+      "source": "30",
+      "sourceHandle": "review_prompt",
+      "target": "31",
+      "targetHandle": "text",
+      "data": {
+        "type": "STRING",
+        "sourceType": "STRING",
+        "targetType": "STRING",
+        "extra": {
+          "type": "STRING"
+        }
+      }
+    },
+    {
+      "id": "quality-47",
+      "type": "baEdge",
+      "source": "1",
+      "sourceHandle": "IMAGE",
+      "target": "34",
+      "targetHandle": "reference",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-48",
+      "type": "baEdge",
+      "source": "4",
+      "sourceHandle": "plan",
+      "target": "34",
+      "targetHandle": "plan",
+      "data": {
+        "type": "STRING",
+        "sourceType": "STRING",
+        "targetType": "STRING",
+        "extra": {
+          "type": "STRING"
+        }
+      }
+    },
+    {
+      "id": "quality-49",
+      "type": "baEdge",
+      "source": "34",
+      "sourceHandle": "review_sheet",
+      "target": "35",
+      "targetHandle": "image",
+      "data": {
+        "type": "IMAGE",
+        "sourceType": "IMAGE",
+        "targetType": "IMAGE",
+        "extra": {
+          "type": "IMAGE"
+        }
+      }
+    },
+    {
+      "id": "quality-50",
+      "type": "baEdge",
+      "source": "34",
+      "sourceHandle": "review_prompt",
+      "target": "35",
+      "targetHandle": "text",
+      "data": {
+        "type": "STRING",
+        "sourceType": "STRING",
+        "targetType": "STRING",
+        "extra": {
+          "type": "STRING"
+        }
+      }
+    },
+    {
+      "id": "quality-51",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "plan",
@@ -9768,7 +10358,7 @@
       }
     },
     {
-      "id": "quality-45",
+      "id": "quality-52",
       "type": "baEdge",
       "source": "30",
       "sourceHandle": "inspection",
@@ -9784,7 +10374,7 @@
       }
     },
     {
-      "id": "quality-46",
+      "id": "quality-53",
       "type": "baEdge",
       "source": "31",
       "sourceHandle": "text",
@@ -9800,7 +10390,7 @@
       }
     },
     {
-      "id": "quality-47",
+      "id": "quality-54",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "state",
@@ -9816,7 +10406,7 @@
       }
     },
     {
-      "id": "quality-48",
+      "id": "quality-55",
       "type": "baEdge",
       "source": "4",
       "sourceHandle": "plan",
@@ -9832,7 +10422,7 @@
       }
     },
     {
-      "id": "quality-49",
+      "id": "quality-56",
       "type": "baEdge",
       "source": "30",
       "sourceHandle": "inspection",
@@ -9848,7 +10438,7 @@
       }
     },
     {
-      "id": "quality-50",
+      "id": "quality-57",
       "type": "baEdge",
       "source": "31",
       "sourceHandle": "text",
@@ -9864,7 +10454,7 @@
       }
     },
     {
-      "id": "quality-51",
+      "id": "quality-58",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "state",
@@ -9880,7 +10470,7 @@
       }
     },
     {
-      "id": "quality-52",
+      "id": "quality-59",
       "type": "baEdge",
       "source": "34",
       "sourceHandle": "inspection",
@@ -9896,7 +10486,7 @@
       }
     },
     {
-      "id": "quality-53",
+      "id": "quality-60",
       "type": "baEdge",
       "source": "35",
       "sourceHandle": "text",
@@ -9912,7 +10502,7 @@
       }
     },
     {
-      "id": "quality-54",
+      "id": "quality-61",
       "type": "baEdge",
       "source": "15",
       "sourceHandle": "image",
@@ -9928,7 +10518,7 @@
       }
     },
     {
-      "id": "quality-55",
+      "id": "quality-62",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_1",
@@ -9944,7 +10534,7 @@
       }
     },
     {
-      "id": "quality-56",
+      "id": "quality-63",
       "type": "baEdge",
       "source": "15",
       "sourceHandle": "image",
@@ -9960,7 +10550,7 @@
       }
     },
     {
-      "id": "quality-57",
+      "id": "quality-64",
       "type": "baEdge",
       "source": "25",
       "sourceHandle": "image",
@@ -9976,7 +10566,7 @@
       }
     },
     {
-      "id": "quality-58",
+      "id": "quality-65",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_1",
@@ -9992,7 +10582,7 @@
       }
     },
     {
-      "id": "quality-59",
+      "id": "quality-66",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_1",
@@ -10008,7 +10598,7 @@
       }
     },
     {
-      "id": "quality-60",
+      "id": "quality-67",
       "type": "baEdge",
       "source": "16",
       "sourceHandle": "image",
@@ -10024,7 +10614,7 @@
       }
     },
     {
-      "id": "quality-61",
+      "id": "quality-68",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_2",
@@ -10040,7 +10630,7 @@
       }
     },
     {
-      "id": "quality-62",
+      "id": "quality-69",
       "type": "baEdge",
       "source": "16",
       "sourceHandle": "image",
@@ -10056,7 +10646,7 @@
       }
     },
     {
-      "id": "quality-63",
+      "id": "quality-70",
       "type": "baEdge",
       "source": "26",
       "sourceHandle": "image",
@@ -10072,7 +10662,7 @@
       }
     },
     {
-      "id": "quality-64",
+      "id": "quality-71",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_2",
@@ -10088,7 +10678,7 @@
       }
     },
     {
-      "id": "quality-65",
+      "id": "quality-72",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_2",
@@ -10104,7 +10694,7 @@
       }
     },
     {
-      "id": "quality-66",
+      "id": "quality-73",
       "type": "baEdge",
       "source": "17",
       "sourceHandle": "image",
@@ -10120,7 +10710,7 @@
       }
     },
     {
-      "id": "quality-67",
+      "id": "quality-74",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_3",
@@ -10136,7 +10726,7 @@
       }
     },
     {
-      "id": "quality-68",
+      "id": "quality-75",
       "type": "baEdge",
       "source": "17",
       "sourceHandle": "image",
@@ -10152,7 +10742,7 @@
       }
     },
     {
-      "id": "quality-69",
+      "id": "quality-76",
       "type": "baEdge",
       "source": "27",
       "sourceHandle": "image",
@@ -10168,7 +10758,7 @@
       }
     },
     {
-      "id": "quality-70",
+      "id": "quality-77",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_3",
@@ -10184,7 +10774,7 @@
       }
     },
     {
-      "id": "quality-71",
+      "id": "quality-78",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_3",
@@ -10200,7 +10790,7 @@
       }
     },
     {
-      "id": "quality-72",
+      "id": "quality-79",
       "type": "baEdge",
       "source": "18",
       "sourceHandle": "image",
@@ -10216,7 +10806,7 @@
       }
     },
     {
-      "id": "quality-73",
+      "id": "quality-80",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_4",
@@ -10232,7 +10822,7 @@
       }
     },
     {
-      "id": "quality-74",
+      "id": "quality-81",
       "type": "baEdge",
       "source": "18",
       "sourceHandle": "image",
@@ -10248,7 +10838,7 @@
       }
     },
     {
-      "id": "quality-75",
+      "id": "quality-82",
       "type": "baEdge",
       "source": "28",
       "sourceHandle": "image",
@@ -10264,7 +10854,7 @@
       }
     },
     {
-      "id": "quality-76",
+      "id": "quality-83",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_4",
@@ -10280,7 +10870,7 @@
       }
     },
     {
-      "id": "quality-77",
+      "id": "quality-84",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_4",
@@ -10296,7 +10886,7 @@
       }
     },
     {
-      "id": "quality-78",
+      "id": "quality-85",
       "type": "baEdge",
       "source": "19",
       "sourceHandle": "image",
@@ -10312,7 +10902,7 @@
       }
     },
     {
-      "id": "quality-79",
+      "id": "quality-86",
       "type": "baEdge",
       "source": "32",
       "sourceHandle": "retry_5",
@@ -10328,7 +10918,7 @@
       }
     },
     {
-      "id": "quality-80",
+      "id": "quality-87",
       "type": "baEdge",
       "source": "19",
       "sourceHandle": "image",
@@ -10344,7 +10934,7 @@
       }
     },
     {
-      "id": "quality-81",
+      "id": "quality-88",
       "type": "baEdge",
       "source": "29",
       "sourceHandle": "image",
@@ -10360,7 +10950,7 @@
       }
     },
     {
-      "id": "quality-82",
+      "id": "quality-89",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_5",
@@ -10376,7 +10966,7 @@
       }
     },
     {
-      "id": "quality-83",
+      "id": "quality-90",
       "type": "baEdge",
       "source": "33",
       "sourceHandle": "image_5",
