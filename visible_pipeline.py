@@ -37,10 +37,14 @@ def split_prompts(recognition, pe, reference, prefix, background_mode="key"):
         normalized_unit = unit.strip().casefold()
         if normalized_unit in units:
             raise ValueError("识别中存在重复的相连单元，不能拆分凑数。")
+        close_rock_edge = (
+            target.get("kind") == "rock" and target.get("layer") == "midground" and
+            target.get("role") == "mountain" and target.get("boundary_cut") is True and
+            target.get("completion_policy") == "close_visible_rock_edge")
         if (target.get("kind") not in ("rock", "hill", "mountain") or
                 target.get("layer") not in ("midground", "background") or
                 target.get("is_single") is not True or target.get("suitable") is not True or
-                target.get("boundary_cut") is not False):
+                (target.get("boundary_cut") is not False and not close_rock_edge)):
             raise ValueError("识别目标不是可提取的完整中远景单元。")
         for field in ("name", "location", "appearance"):
             if not isinstance(target.get(field), str) or not target[field].strip():
@@ -92,6 +96,11 @@ def split_prompts(recognition, pe, reference, prefix, background_mode="key"):
             "当前输入是完整原图，先按以上身份定位，再执行以下PE。\n"
             "同一id/unit_id与自然组身份保持不变；具体峰型、轮廓、平台与岩阶以原图可见事实为准。"
             "若文字误写圆钝，保留原图实际尖峰与棱角；不换目标、不凭文字重新塑形。\n")
+        if target.get("boundary_cut") is True:
+            identity += (
+                "来源说明：本近景岩台在原图边缘被截到；保留真实boundary_cut标记。"
+                "仅将可见雪顶与岩阶的截断边缘自然收束成可复用岩块，"
+                "不延展画外台地，不增加山峰，不改变可见纹理与结构。\n")
         background = (
             "\n底色不限，白底、其他颜色或透明均可；不要求指定颜色或透明通道。"
             if background_mode == "any" else

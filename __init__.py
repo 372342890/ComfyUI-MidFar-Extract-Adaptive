@@ -18,6 +18,10 @@ from .visible_nodes import (
     BAMidFarVisibleAsset, BAMidFarVisiblePNG, BAMidFarVisiblePE, BAMidFarVisibleThreePNG,
 )
 from .adaptive_nodes import BAMidFarAdaptivePE, BAMidFarActivePrompt, BAMidFarAdaptivePNG
+from .five_quality_nodes import (
+    BAMidFarFivePlan, BAMidFarFiveReference, BAMidFarFiveInspect,
+    BAMidFarFiveRetry, BAMidFarFiveSelect, BAMidFarFiveFinal,
+)
 
 
 class BAMidFarPlanPrompt:
@@ -290,6 +294,12 @@ class BAMidFarSelectedMatte:
 
 
 NODE_CLASS_MAPPINGS = {
+    "BAMidFarFivePlan": BAMidFarFivePlan,
+    "BAMidFarFiveReference": BAMidFarFiveReference,
+    "BAMidFarFiveInspect": BAMidFarFiveInspect,
+    "BAMidFarFiveRetry": BAMidFarFiveRetry,
+    "BAMidFarFiveSelect": BAMidFarFiveSelect,
+    "BAMidFarFiveFinal": BAMidFarFiveFinal,
     "SeedreamBatch2K": SeedreamBatch2K,
     "AutoGridSplit": AutoGridSplit,
     "GridAssetSplitter": GridAssetSplitter,
@@ -329,6 +339,12 @@ NODE_CLASS_MAPPINGS = {
     "BAMidFarAdaptivePNG": BAMidFarAdaptivePNG,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
+    "BAMidFarFivePlan": "五路PE准入 · 三近两远与造型锁定",
+    "BAMidFarFiveReference": "五路当前原图定位 · 动态局部参考",
+    "BAMidFarFiveInspect": "五路数值检查 · 原图成图对照",
+    "BAMidFarFiveRetry": "五路视觉报告 · 仅失败路重试",
+    "BAMidFarFiveSelect": "五路惰性选图 · 合格路保留",
+    "BAMidFarFiveFinal": "五路最终门禁 · 合格才保存五张PNG",
     "SeedreamBatch2K": "Seedream 5.0 Pro · 批量高清 · 尺寸可选",
     "AutoGridSplit": "自动网格切图",
     "GridAssetSplitter": "方格切图 · 高级设置",

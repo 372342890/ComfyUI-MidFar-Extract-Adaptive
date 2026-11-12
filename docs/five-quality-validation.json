@@ -1,0 +1,62 @@
+{
+  "validated_date": "2026-11-12",
+  "local_status": "passed",
+  "test_count": 347,
+  "new_quality_test_count": 25,
+  "complete_plugin_import": "passed",
+  "new_node_registration_count": 6,
+  "command": "/tmp/byteartist-midfar-venv/bin/python -m unittest discover -v",
+  "red_evidence": {
+    "initial_shape_workflow_tests": 16,
+    "initial_node_tests": 6,
+    "reason": "missing five_quality/five_quality_workflow/five_quality_nodes",
+    "outcome": "failed before implementation"
+  },
+  "python": "3.12.16 (main, Oct 26 2026, 13:59:40) [Clang 23.1.3 ]",
+  "packages": {
+    "numpy": "2.5.4",
+    "opencv-python-headless": "5.0.0.93",
+    "Pillow": "13.0.0"
+  },
+  "workflow": {
+    "nodes": 31,
+    "edges": 84,
+    "loaders": 1,
+    "native_first_image_models": 5,
+    "native_optional_retry_models": 5,
+    "normal_first_round_image_calls": 5,
+    "max_retry_per_failed_branch": 1,
+    "near_outputs": 3,
+    "far_outputs": 2,
+    "png_size": [
+      2048,
+      2048
+    ]
+  },
+  "verified": [
+    "exact three-near two-far identity and depth",
+    "three unique shape landmarks with current-image points",
+    "ordered contour, actual connections and rhythm required",
+    "all other four targets require three structural differences",
+    "full ten-pair numeric/mirror/partial and visual checks",
+    "run_id/review_id/source hash/image hash binding",
+    "complete graph adapter: first success executes no retry or second review",
+    "complete graph adapter: one failure executes only that retry and final review",
+    "complete graph adapter: second failure saves no final PNG",
+    "atomic five-PNG directory publication; disk error leaves no partial set",
+    "actual local interpreter imports complete plugin and registers six new nodes"
+  ],
+  "cloud_plugin_updated": false,
+  "cloud_workflow_run": false,
+  "live_visual_model_calls_in_tests": 0,
+  "host_validation": "explicit local lazy-protocol adapter, not live cloud scheduler",
+  "git_commit_created": false,
+  "repository_pushed": false,
+  "workflow_published": false,
+  "limits": [
+    "source images with fewer than three suitable near targets and two far ranges stop",
+    "opaque snow topology needs visual review rather than component-count assertion",
+    "native visual judgments need human review for important assets",
+    "cloud must install these new nodes before importing and running the graph"
+  ]
+}

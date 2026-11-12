@@ -1,4 +1,11 @@
-# Adaptive 独立副本：实际 1–3 路山体提取
+# Adaptive 独立副本：山体提取
+
+新增完整三近两远链路：`midfar-five-quality.byteartist.json`。一个原图入口，
+动态定位并生成三个近景、两个远景；恢复至少三锚点、真实岩土连续、
+清晰轮廓、起伏节奏及不额外拔尖等原PE限制，全部十对查重。
+首轮失败时只重试失败路一次，只有最终五路全部合格才保存PNG。
+安装与执行说明见 [docs/five-quality.md](docs/five-quality.md)。
+本地测试不代表云端新版已部署或已实跑。
 
 本仓库基于 [372342890/ComfyUI-MidFar-Extract](https://github.com/372342890/ComfyUI-MidFar-Extract) 的 MIT 源码复制改进，保留原 LICENSE 与历史节点。新工作流为 `midfar-adaptive.byteartist.json`，仅包含原图识别、独立 PE、提取与查重，不含面数分析或 3D。
 
