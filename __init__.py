@@ -21,7 +21,7 @@ from .adaptive_nodes import BAMidFarAdaptivePE, BAMidFarActivePrompt, BAMidFarAd
 from .five_quality_nodes import (
     BAMidFarFivePlan, BAMidFarFiveReference, BAMidFarFiveInspect,
     BAMidFarFiveRetry, BAMidFarFiveSelect, BAMidFarFiveFinal,
-    BAMidFarCanvasFit, BAMidFarFiveArchive,
+    BAMidFarCanvasFit, BAMidFarFiveArchive, BAMidFarJSONValue,
 )
 from .recognition_nodes import BAMidFarRecognitionContext, BAMidFarRecognitionFinal
 
@@ -296,6 +296,7 @@ class BAMidFarSelectedMatte:
 
 
 NODE_CLASS_MAPPINGS = {
+    "BAMidFarJSONValue": BAMidFarJSONValue,
     "BAMidFarCanvasFit": BAMidFarCanvasFit,
     "BAMidFarFiveArchive": BAMidFarFiveArchive,
     "BAMidFarRecognitionContext": BAMidFarRecognitionContext,
@@ -345,6 +346,7 @@ NODE_CLASS_MAPPINGS = {
     "BAMidFarAdaptivePNG": BAMidFarAdaptivePNG,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
+    "BAMidFarJSONValue": "当前验收JSON输入 · 严格解析且无模型调用",
     "BAMidFarCanvasFit": "全图等比留白 · 保留裁边失败证据",
     "BAMidFarFiveArchive": "五图像素导出 · 验收身份绑定",
     "BAMidFarRecognitionContext": "五路识别诊断 · 当前原图绑定与解析反馈",

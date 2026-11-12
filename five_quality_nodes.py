@@ -101,6 +101,20 @@ class BAMidFarFiveInspect:
         return torch.from_numpy(sheet), prompt, _json(inspection)
 
 
+class BAMidFarJSONValue:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {"value": ("STRING", {"default": "{}", "multiline": True})}}
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("value",)
+    FUNCTION = "run"
+    CATEGORY = "MidFar Extract/Five Quality"
+
+    def run(self, value):
+        return (_json(decode(value)),)
+
+
 class BAMidFarCanvasFit:
     @classmethod
     def INPUT_TYPES(cls):

@@ -16,6 +16,17 @@ from test_visible_native_preview import Tensor
 
 
 class FiveDelivery(unittest.TestCase):
+    def test_json_value_is_a_visible_validated_constant_with_no_model(self):
+        nodes = node_module()
+        self.assertTrue(hasattr(nodes, "BAMidFarJSONValue"), "缺少恢复规划的可见JSON输入")
+        node = nodes.BAMidFarJSONValue()
+        self.assertFalse(node.INPUT_TYPES()["required"]["value"][1].get("forceInput", False))
+        value = {"source_hash": "same-source", "target": {"id": "m3", "bbox": [.1, .2, .8, .9]}}
+        self.assertEqual(json.loads(node.run(json.dumps(value))[0]), value)
+        for invalid in ('{"id":"m1","id":"m3"}', '{"target":', '{"x":NaN}'):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                node.run(invalid)
+
     def test_fit_preserves_whole_canvas_and_increases_all_margins(self):
         image = np.ones((1, 256, 256, 3), np.float32)
         image[:, 20:235, 4:252] = .2

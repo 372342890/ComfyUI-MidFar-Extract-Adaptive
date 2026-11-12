@@ -11,3 +11,5 @@ FiveArchive encodes five actual tensors as PNGs in a ZIP and exposes the payload
 The recovery workflow uses the five actual images generated at 15:07 on 2026-11-12 as annotated output-file inputs. It retains their generation paths, original grouping reply, source hash, and prior malformed review separately. Installation restart must not silently regenerate these first images. Both new reviews inspect fresh comparisons; only genuinely failed image routes may generate once.
 
 Validation: 368 unittest cases pass, including full lazy graph execution, cut-edge protection, complete model output templates, and PNG pixel round trips. Online acceptance remains a separate requirement.
+
+Recovery constants use visible JSONValue nodes: ByteArtist requires actual edges for forceInput pins, even when their imported JSON contains a value. JSONValue performs strict parsing and returns the same record; it does not call a model. With this adapter, 369 regression tests pass.
