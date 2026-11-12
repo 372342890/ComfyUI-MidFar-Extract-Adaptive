@@ -75,7 +75,9 @@ def build_quality_workflow(input_filename="reference.png", filename_prefix="midf
            [("review_prompt", "STRING"), ("reference", "IMAGE"), ("context", "STRING")],
            ("context",))
     native("pe", 38, "②b 原图分组复核 · 同图重新观察一次",
-           940, 3700, "按连接的当前原图与复核提示词重新识别完整自然组，只输出完整JSON。")
+           940, 3700, "按连接的当前原图与复核提示词重新识别完整自然组。"
+           "输出source_hash、review_id及完整recognition包装JSON，绑定值逐字复制上下文。"
+           + GROUP_RULES)
     custom(39, "BAMidFarRecognitionFinal", "②c 自然组准入 · 十对分离与坐标合法性",
            1420, 3700, [_slot("reference", "IMAGE"), _slot("context", "STRING"),
                         _slot("review", "STRING")],

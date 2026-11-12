@@ -74,7 +74,7 @@
             "name": "user_prompt",
             "label": "user_prompt",
             "type": "STRING",
-            "value": "你是游戏场景原图资产识别助手。本轮需求：三个山体（近景），加两个远景山脉，统一五路提取并跨路查重。\n只观察当前原图，分别盘点近景与远景，不预设实际够数。\n山体：前三路是靠近场景前方的近景山岩资产，包含山峰、連体山群和具有独立雪顶/岩阶轮廓的宽岩台，当前节点距离层记为midground。不同位置、不同自然单元；不要求每路都是孤立山峰。禁止选background远景山体或远景独立小山补位。\n山脉：最多两个远处连续的多峰山脊或长山脉，具有自身可见连续岩土/雪脊连接和自然两端；保留远景低对比蓝灰色空气透视，不能拿前两类山体扩大画布冒充山脉。\n先统一列出自然单元，再分为role=mountain或range；同一unit_id只能使用一次。前后重叠不同深度不算连接；同一连续双峰、主峰与岩肩必须整组作为一个单元。山脉不能包含前三路山体，两个山脉不能共享同一段主峰。位置、轮廓、峰数、天然连接、岩阶和色调必须分别描述。\n不要提取前景散石、科考站、卫星天线、地面托盘、整个雪原、天空、左右被画面截断的整层背景。可见近景岩台只有末端被边缘截到时，可以限定为可见岩台资产，仅自然收束截断末端，不延展整层台地或新添峰。此类目标kind=rock、boundary_cut=true、completion_policy=\"close_visible_rock_edge\"，不得伪报完整原图边界。可以补被挡住的短自然山脚，不能臆造画面外整条山脉。若某类确实没有可见独立资产，输出实际数量并说明缺口，不能拆份或换编号凑数。\n输出合法JSON对象：style、shortfall、objects。objects先最多3个mountain，再最多2个range。\n每项包含id、unit_id（安全英文编号）、name、role（mountain/range）、kind（mountain或rock）、layer（mountain必须midground，range必须background）、location、appearance、occlusion、connected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy。\nlocation描述在完整原图中的唯一位置与邻近参照，appearance详细描述原图可见峰形与相连轮廓；connected_parts和excluded_objects是字符串数组。完整自然单元is_single=true、suitable=true、boundary_cut=false。不要输出Markdown或注释。\n【恢复原PE造型限制】至少三处可直接对照原图核实的独有中大尺度锚点，\n不能用细碎纹理、小石头或噪点充数。按左端→左肩→主高点→鞍部/凹口→\n次高点/岩阶→右端描述有序轮廓；没有的项写无，不固定峰数。\n保留主次高点比例、峰间距、陡缓坡、凸肩岩阶、两端收势及高低疏密节奏，\n禁止泛化为圆包、单坡或均匀重复峰列。\n本组岩土连接必须有原图证据，雪地、共同背景、遮挡或投影重叠不能算连接。\n不可删除连接段：相接山肩、低肩、鞍部下方岩土、共有岩基和天然山脚；\n不挖穿背景缝，不断脊、不悬空、不切散，不焊接原本分離的邻山。\n保留原图实际尖钝、宽厚根部和真实棱角：不拔尖、不拉高、不削薄、\n不强化密集锯齿或细长针柱，不统一圆丘化。\n逐一对其他四路至少写三项中大尺度结构差异；位置、颜色、光照、镜像、\n整体尺寸和细纹不能算独立结构差异。不共享主峰、不拆同组、不局部包含。\n成图缺少任一锚点、轮廓不清晰、没有起伏节奏、真实连接断开或被额外拔尖，\n都判本路失败，重新提取同一目标。完整居中，宽高各不超过画布70%，\n四侧至少15%空白，保持原投影宽高比，仅整体等比缩放。\n【本完整自动链路的额外JSON字段，以本段为准】\n期望恰好三个近景mountain、两个远景range，确实不足时输出实际数及shortfall。\n在原有每项目标字段上增加：\nbbox=[left,top,right,bottom]，target_point=[x,y]，均为当前整张原图0..1归一化坐标；\nbbox完整覆盖可见自然单元，target_point落在目标自身岩体，不能落在天空或遮挡物；\nlandmarks至少3项，每项{name:\"本目标内唯一锚点名\",shape:\"具体中大尺度造型\",point:[x,y]}，\npoint用整张原图0..1，须在bbox内。至少三个不同造型及不同点，不使用细纹充数；\ncontour_fingerprint为至少4项从左到右有序的真实轮廓描述字符串数组；\nrhythm为具体高低、峰间距、宽厚和转折节奏的文本。\nconnected_parts至少一项可证明的本组岩土连接；单峰也描述坡身和自身岩基连接。\n不输出示例坐标或旧图信息。全部字段必须来自当前图，不能通过填字段伪装合格。\n【自然组契约 natural-units-v1】\n只输出一个完整JSON对象，不写思考过程、Markdown、注释、算式或重复字段。\nid使用英文字符串，每个unit_id唯一；坐标统一coordinate_space=\"normalized\"，所有bbox、\ntarget_point和landmarks.point均为完整原图0..1数值，先计算数值，不输出除法。\ngrouping_contract=\"natural-units-v1\"。每个objects目标新增component_ids英文字符串数组，\n同一实际岩峰、岩肩、岩基组成部分只能属于一个自然组；不把连体双峰按左右拆路。\nis_single=true代表整个自然单元，即使它有多个相连峰。不同深度投影重叠不是连接。\ngroup_relations完整列出五个目标全部十对，每项：\n{\"ids\":[\"实际id1\",\"实际id2\"],\"relation\":\"separated或separate_depth\",\"evidence\":\"当前图可见分界\"}\n只有确实不同深度才用separate_depth；同深度用可见雪谷/间隙等岩土分离证据。\n若存在真实连接，先合并该自然单元、重新选其他独立目标；不得把connected改成\nseparated凑数。无完整五组时输出实际数量与shortfall，不能臆造补位。\nclose_visible_rock_edge仅可用于kind=rock、role=mountain且boundary_cut=true的近景岩台末端；\n完整山峰/远景山脉不得使用该策略。其余目标completion_policy=\"short_occluded_foot\"。\n各目标仍完整提供name、role、kind、layer、location、appearance、occlusion、\nconnected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy、\nbbox、target_point、至少3个landmarks{name,shape,point}、至少4项contour_fingerprint和rhythm。\nstyle与shortfall仍保留。描述具体简洁，每条证据30字左右；优先完整输出全部字段。\n"
+            "value": "你是游戏场景原图资产识别助手。本轮需求：三个山体（近景），加两个远景山脉，统一五路提取并跨路查重。\n只观察当前原图，分别盘点近景与远景，不预设实际够数。\n山体：前三路是靠近场景前方的近景山岩资产，包含山峰、連体山群和具有独立雪顶/岩阶轮廓的宽岩台，当前节点距离层记为midground。不同位置、不同自然单元；不要求每路都是孤立山峰。禁止选background远景山体或远景独立小山补位。\n山脉：最多两个远处连续的多峰山脊或长山脉，具有自身可见连续岩土/雪脊连接和自然两端；保留远景低对比蓝灰色空气透视，不能拿前两类山体扩大画布冒充山脉。\n先统一列出自然单元，再分为role=mountain或range；同一unit_id只能使用一次。前后重叠不同深度不算连接；同一连续双峰、主峰与岩肩必须整组作为一个单元。山脉不能包含前三路山体，两个山脉不能共享同一段主峰。位置、轮廓、峰数、天然连接、岩阶和色调必须分别描述。\n不要提取前景散石、科考站、卫星天线、地面托盘、整个雪原、天空、左右被画面截断的整层背景。可见近景岩台只有末端被边缘截到时，可以限定为可见岩台资产，仅自然收束截断末端，不延展整层台地或新添峰。此类目标kind=rock、boundary_cut=true、completion_policy=\"close_visible_rock_edge\"，不得伪报完整原图边界。可以补被挡住的短自然山脚，不能臆造画面外整条山脉。若某类确实没有可见独立资产，输出实际数量并说明缺口，不能拆份或换编号凑数。\n输出合法JSON对象：style、shortfall、objects。objects先最多3个mountain，再最多2个range。\n每项包含id、unit_id（安全英文编号）、name、role（mountain/range）、kind（mountain或rock）、layer（mountain必须midground，range必须background）、location、appearance、occlusion、connected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy。\nlocation描述在完整原图中的唯一位置与邻近参照，appearance详细描述原图可见峰形与相连轮廓；connected_parts和excluded_objects是字符串数组。完整自然单元is_single=true、suitable=true、boundary_cut=false。不要输出Markdown或注释。\n【恢复原PE造型限制】至少三处可直接对照原图核实的独有中大尺度锚点，\n不能用细碎纹理、小石头或噪点充数。按左端→左肩→主高点→鞍部/凹口→\n次高点/岩阶→右端描述有序轮廓；没有的项写无，不固定峰数。\n保留主次高点比例、峰间距、陡缓坡、凸肩岩阶、两端收势及高低疏密节奏，\n禁止泛化为圆包、单坡或均匀重复峰列。\n本组岩土连接必须有原图证据，雪地、共同背景、遮挡或投影重叠不能算连接。\n不可删除连接段：相接山肩、低肩、鞍部下方岩土、共有岩基和天然山脚；\n不挖穿背景缝，不断脊、不悬空、不切散，不焊接原本分離的邻山。\n保留原图实际尖钝、宽厚根部和真实棱角：不拔尖、不拉高、不削薄、\n不强化密集锯齿或细长针柱，不统一圆丘化。\n逐一对其他四路至少写三项中大尺度结构差异；位置、颜色、光照、镜像、\n整体尺寸和细纹不能算独立结构差异。不共享主峰、不拆同组、不局部包含。\n成图缺少任一锚点、轮廓不清晰、没有起伏节奏、真实连接断开或被额外拔尖，\n都判本路失败，重新提取同一目标。完整居中，宽高各不超过画布70%，\n四侧至少15%空白，保持原投影宽高比，仅整体等比缩放。\n【本完整自动链路的额外JSON字段，以本段为准】\n期望恰好三个近景mountain、两个远景range，确实不足时输出实际数及shortfall。\n在原有每项目标字段上增加：\nbbox=[left,top,right,bottom]，target_point=[x,y]，均为当前整张原图0..1归一化坐标；\nbbox完整覆盖可见自然单元，target_point落在目标自身岩体，不能落在天空或遮挡物；\nlandmarks至少3项，每项{name:\"本目标内唯一锚点名\",shape:\"具体中大尺度造型\",point:[x,y]}，\npoint用整张原图0..1，须在bbox内。至少三个不同造型及不同点，不使用细纹充数；\ncontour_fingerprint为至少4项从左到右有序的真实轮廓描述字符串数组；\nrhythm为具体高低、峰间距、宽厚和转折节奏的文本。\nconnected_parts至少一项可证明的本组岩土连接；单峰也描述坡身和自身岩基连接。\n不输出示例坐标或旧图信息。全部字段必须来自当前图，不能通过填字段伪装合格。\n【自然组契约 natural-units-v1】\n只输出一个完整JSON对象，不写思考过程、Markdown、注释、算式或重复字段。\nid、unit_id与component_ids每个元素只用1至40个ASCII英文、数字、下划线或连字符，\n使用简短编号，不用长描述充当标识。每个unit_id唯一；坐标统一coordinate_space=\"normalized\"，所有bbox、\ntarget_point和landmarks.point均为完整原图0..1数值，先计算数值，不输出除法。\ngrouping_contract=\"natural-units-v1\"。每个objects目标新增component_ids英文字符串数组，\n同一实际岩峰、岩肩、岩基组成部分只能属于一个自然组；不把连体双峰按左右拆路。\nis_single=true代表整个自然单元，即使它有多个相连峰。不同深度投影重叠不是连接。\ngroup_relations完整列出五个目标全部十对，每项：\n{\"ids\":[\"实际id1\",\"实际id2\"],\"relation\":\"separated或separate_depth\",\"evidence\":\"当前图可见分界\"}\n本契约layer为midground/background两档。相同layer配对用separated，并提供真实可见的\n雪谷、间隙或独立岩基分界，不能只用位置或声称不同深度证明独立。\nseparate_depth只用于一个midground与一个background，且确实存在原图深度证据。\n若存在真实连接，先合并该自然单元、重新选其他独立目标；不得把connected改成\nseparated凑数。无完整五组时输出实际数量与shortfall，不能臆造补位。\nclose_visible_rock_edge仅可用于kind=rock、role=mountain且boundary_cut=true的近景岩台末端；\n完整山峰/远景山脉不得使用该策略。其余目标completion_policy=\"short_occluded_foot\"。\n各目标必须完整提供id、unit_id、component_ids、name、role、kind、layer、location、appearance、occlusion、\nconnected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy、\nbbox、target_point、至少3个landmarks{name,shape,point}、至少4项contour_fingerprint和rhythm。\nstyle与shortfall仍保留。描述具体简洁，每条证据30字左右；优先完整输出全部字段。\n"
           }
         ],
         "outputSlots": [
@@ -541,7 +541,15 @@
               "type": "paragraph",
               "children": [
                 {
-                  "text": "id使用英文字符串，每个unit_id唯一；坐标统一coordinate_space=\"normalized\"，所有bbox、"
+                  "text": "id、unit_id与component_ids每个元素只用1至40个ASCII英文、数字、下划线或连字符，"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "使用简短编号，不用长描述充当标识。每个unit_id唯一；坐标统一coordinate_space=\"normalized\"，所有bbox、"
                 }
               ]
             },
@@ -597,7 +605,23 @@
               "type": "paragraph",
               "children": [
                 {
-                  "text": "只有确实不同深度才用separate_depth；同深度用可见雪谷/间隙等岩土分离证据。"
+                  "text": "本契约layer为midground/background两档。相同layer配对用separated，并提供真实可见的"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "雪谷、间隙或独立岩基分界，不能只用位置或声称不同深度证明独立。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "separate_depth只用于一个midground与一个background，且确实存在原图深度证据。"
                 }
               ]
             },
@@ -637,7 +661,7 @@
               "type": "paragraph",
               "children": [
                 {
-                  "text": "各目标仍完整提供name、role、kind、layer、location、appearance、occlusion、"
+                  "text": "各目标必须完整提供id、unit_id、component_ids、name、role、kind、layer、location、appearance、occlusion、"
                 }
               ]
             },
@@ -1358,7 +1382,7 @@
             "name": "user_prompt",
             "label": "user_prompt",
             "type": "STRING",
-            "value": "按连接的当前原图与复核提示词重新识别完整自然组，只输出完整JSON。"
+            "value": "按连接的当前原图与复核提示词重新识别完整自然组。输出source_hash、review_id及完整recognition包装JSON，绑定值逐字复制上下文。\n【自然组契约 natural-units-v1】\n只输出一个完整JSON对象，不写思考过程、Markdown、注释、算式或重复字段。\nid、unit_id与component_ids每个元素只用1至40个ASCII英文、数字、下划线或连字符，\n使用简短编号，不用长描述充当标识。每个unit_id唯一；坐标统一coordinate_space=\"normalized\"，所有bbox、\ntarget_point和landmarks.point均为完整原图0..1数值，先计算数值，不输出除法。\ngrouping_contract=\"natural-units-v1\"。每个objects目标新增component_ids英文字符串数组，\n同一实际岩峰、岩肩、岩基组成部分只能属于一个自然组；不把连体双峰按左右拆路。\nis_single=true代表整个自然单元，即使它有多个相连峰。不同深度投影重叠不是连接。\ngroup_relations完整列出五个目标全部十对，每项：\n{\"ids\":[\"实际id1\",\"实际id2\"],\"relation\":\"separated或separate_depth\",\"evidence\":\"当前图可见分界\"}\n本契约layer为midground/background两档。相同layer配对用separated，并提供真实可见的\n雪谷、间隙或独立岩基分界，不能只用位置或声称不同深度证明独立。\nseparate_depth只用于一个midground与一个background，且确实存在原图深度证据。\n若存在真实连接，先合并该自然单元、重新选其他独立目标；不得把connected改成\nseparated凑数。无完整五组时输出实际数量与shortfall，不能臆造补位。\nclose_visible_rock_edge仅可用于kind=rock、role=mountain且boundary_cut=true的近景岩台末端；\n完整山峰/远景山脉不得使用该策略。其余目标completion_policy=\"short_occluded_foot\"。\n各目标必须完整提供id、unit_id、component_ids、name、role、kind、layer、location、appearance、occlusion、\nconnected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy、\nbbox、target_point、至少3个landmarks{name,shape,point}、至少4项contour_fingerprint和rhythm。\nstyle与shortfall仍保留。描述具体简洁，每条证据30字左右；优先完整输出全部字段。\n"
           }
         ],
         "outputSlots": [
@@ -1529,7 +1553,175 @@
               "type": "paragraph",
               "children": [
                 {
-                  "text": "按连接的当前原图与复核提示词重新识别完整自然组，只输出完整JSON。"
+                  "text": "按连接的当前原图与复核提示词重新识别完整自然组。输出source_hash、review_id及完整recognition包装JSON，绑定值逐字复制上下文。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "【自然组契约 natural-units-v1】"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "只输出一个完整JSON对象，不写思考过程、Markdown、注释、算式或重复字段。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "id、unit_id与component_ids每个元素只用1至40个ASCII英文、数字、下划线或连字符，"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "使用简短编号，不用长描述充当标识。每个unit_id唯一；坐标统一coordinate_space=\"normalized\"，所有bbox、"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "target_point和landmarks.point均为完整原图0..1数值，先计算数值，不输出除法。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "grouping_contract=\"natural-units-v1\"。每个objects目标新增component_ids英文字符串数组，"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "同一实际岩峰、岩肩、岩基组成部分只能属于一个自然组；不把连体双峰按左右拆路。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "is_single=true代表整个自然单元，即使它有多个相连峰。不同深度投影重叠不是连接。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "group_relations完整列出五个目标全部十对，每项："
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "{\"ids\":[\"实际id1\",\"实际id2\"],\"relation\":\"separated或separate_depth\",\"evidence\":\"当前图可见分界\"}"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "本契约layer为midground/background两档。相同layer配对用separated，并提供真实可见的"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "雪谷、间隙或独立岩基分界，不能只用位置或声称不同深度证明独立。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "separate_depth只用于一个midground与一个background，且确实存在原图深度证据。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "若存在真实连接，先合并该自然单元、重新选其他独立目标；不得把connected改成"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "separated凑数。无完整五组时输出实际数量与shortfall，不能臆造补位。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "close_visible_rock_edge仅可用于kind=rock、role=mountain且boundary_cut=true的近景岩台末端；"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "完整山峰/远景山脉不得使用该策略。其余目标completion_policy=\"short_occluded_foot\"。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "各目标必须完整提供id、unit_id、component_ids、name、role、kind、layer、location、appearance、occlusion、"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "connected_parts、excluded_objects、is_single、suitable、boundary_cut、completion_policy、"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "bbox、target_point、至少3个landmarks{name,shape,point}、至少4项contour_fingerprint和rhythm。"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "style与shortfall仍保留。描述具体简洁，每条证据30字左右；优先完整输出全部字段。"
                 }
               ]
             }
