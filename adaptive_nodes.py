@@ -26,7 +26,12 @@ def _active_prefixes(prefixes):
 
 class BAMidFarAdaptivePE(BAMidFarVisiblePE):
     CATEGORY = "MidFar Extract/Adaptive"
-    DESCRIPTION = "Validates 1–3 real targets; absent trailing prompts and paths are empty."
+    DESCRIPTION = "Validates 1–3 real targets; absent prompts block generation, paths stay empty."
+
+    def run(self, reference, recognition, pe, filename_prefix, background_mode="key"):
+        outputs = super().run(reference, recognition, pe, filename_prefix, background_mode)
+        prompts = tuple(prompt if prompt.strip() else _blocker() for prompt in outputs[:3])
+        return (*prompts, *outputs[3:])
 
 
 class BAMidFarActivePrompt:

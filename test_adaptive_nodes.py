@@ -13,6 +13,7 @@ import numpy as np
 
 from test_visible_batch import image
 from test_visible_native_preview import Tensor
+from test_visible_pe_split import recognition
 
 ROOT = Path(__file__).parent
 
@@ -65,6 +66,35 @@ class AdaptiveNodes(unittest.TestCase):
         self.assertIsInstance(node.run(" \n")[0], ExecutionBlocker)
         with self.assertRaises(ValueError):
             node.run(None)
+
+    def test_pe_blocks_only_absent_prompts_and_keeps_collector_contract(self):
+        node = self.node("BAMidFarAdaptivePE")
+        collector = self.node("BAMidFarAdaptivePNG")
+        for count in (1, 2, 3):
+            with self.subTest(count=count):
+                plan = recognition()
+                plan["objects"] = plan["objects"][:count]
+                for target in plan["objects"]:
+                    target["prompt"] = "完整提取这一实际目标：" + target["id"]
+                text = json.dumps(plan)
+                result = node.run(Tensor(image()), text, text,
+                                  f"merged/count{count}/asset", "any")
+                self.assertEqual(len(result), 8)
+                record = json.loads(result[7])
+                self.assertEqual(record["target_count"], count)
+                self.assertEqual(list(result[:count]), record["execution_prompts"])
+                self.assertTrue(all(isinstance(prompt, ExecutionBlocker)
+                                    for prompt in result[count:3]))
+                self.assertEqual(result[3], "any")
+                self.assertEqual(list(result[4 + count:7]), [""] * (3 - count))
+                self.assertEqual(collector.check_lazy_status(
+                    key_color=result[3], prefix_1=result[4],
+                    prefix_2=result[5], prefix_3=result[6]),
+                    [f"image_{i}" for i in range(1, count + 1)])
+                records = list((Path(self.directory.name) / "merged"
+                                / f"count{count}").glob("*_PE分路.json"))
+                self.assertEqual(len(records), 1)
+                self.assertEqual(json.loads(records[0].read_text()), record)
 
     def test_lazy_collector_requests_only_missing_active_images(self):
         node = self.node("BAMidFarAdaptivePNG")
