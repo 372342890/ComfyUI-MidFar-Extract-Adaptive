@@ -1,5 +1,7 @@
 # Adaptive 独立副本：山体提取
 
+新增 `BAMidFarModelAudit`：三路共用的模型尺寸/面数验收，可选按目标最长边整组等比缩放后归位到底部中心。参数与接线见 [docs/model-audit.md](docs/model-audit.md)。
+
 新增完整三近两远链路：`midfar-five-quality.byteartist.json`。一个原图入口，
 动态定位并生成三个近景、两个远景；恢复至少三锚点、真实岩土连续、
 清晰轮廓、起伏节奏及不额外拔尖等原PE限制，全部十对查重。
