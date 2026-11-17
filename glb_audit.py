@@ -332,20 +332,14 @@ def inspect_glb(data, up_axis="Y"):
     return _geometry(doc, chunks, up_axis)
 
 
-def process_glb(data, up_axis="Y", bottom_origin=True, size_mode="keep", target_longest_edge=10.0):
-    """Audit, uniformly size and translate the complete scene under an identity root."""
-    if size_mode not in ("keep", "longest_edge"):
-        raise ValueError("size_mode must be keep or longest_edge.")
-    if (type(target_longest_edge) not in (int, float) or not math.isfinite(target_longest_edge)
-            or target_longest_edge <= 0):
-        raise ValueError("target_longest_edge must be a positive finite number in model units.")
+def process_glb(data, up_axis="Y", bottom_origin=True, scale_factor=1.0):
+    """Audit, multiply scene dimensions and translate under an identity root."""
+    if (type(scale_factor) not in (int, float) or not math.isfinite(scale_factor)
+            or scale_factor <= 0):
+        raise ValueError("scale_factor must be a positive finite number; 1 keeps the source size.")
     doc, chunks = read_glb(data)
     before = _geometry(doc, chunks, up_axis)
-    scale = target_longest_edge / before["longest_edge"] if size_mode == "longest_edge" else 1
-    if not math.isfinite(scale) or scale <= 0:
-        raise ValueError("Configured size produces an invalid uniform scale.")
-    if abs(scale - 1) <= 1e-12:
-        scale = 1
+    scale = scale_factor
     pivot = before["bottom_center"]
     translation = [-v * scale if v else 0 for v in pivot] if bottom_origin else [0, 0, 0]
     _finite_vector(translation, 3, "scaled origin translation")
@@ -386,15 +380,14 @@ def process_glb(data, up_axis="Y", bottom_origin=True, size_mode="keep", target_
     preserved = (chunks == after_chunks and all(
         abs(expected_dimensions[key] - after["dimensions"][key]) <= tolerance
         for key in before["dimensions"]) and before["triangles"] == after["triangles"])
-    expected_edge = before["longest_edge"] if size_mode == "keep" else target_longest_edge
+    expected_edge = before["longest_edge"] * scale
     if (not preserved or abs(after["longest_edge"] - expected_edge) > tolerance
             or (bottom_origin and any(abs(v) > tolerance for v in after["bottom_center"]))):
         raise ValueError("GLB export verification failed: geometry/payload/origin changed incorrectly.")
     report = dict(before)
     report.update({
         "status": "success", "origin_applied": bool(bottom_origin),
-        "size_mode": size_mode, "scale_factor": scale,
-        "target_longest_edge": target_longest_edge if size_mode == "longest_edge" else None,
+        "scale_factor": scale,
         "source_dimensions": before["dimensions"], "source_longest_edge": before["longest_edge"],
         "source_ratios": before["ratios"],
         "dimensions": after["dimensions"], "longest_edge": after["longest_edge"],

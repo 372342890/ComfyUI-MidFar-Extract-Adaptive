@@ -123,9 +123,9 @@ class BAMidFarModelAudit:
                 "strict_limits": ("BOOLEAN", {"default": False}),
                 "base_url": ("STRING", {"default": ""}),
                 "view_endpoint": ("STRING", {"default": "/api/view"}),
-                "size_mode": (["keep", "longest_edge"], {"default": "keep"}),
-                "target_longest_edge": ("FLOAT", {"default": 10.0, "min": 0.000001,
-                                                 "max": 1e9, "step": 0.1}),
+                "scale_factor": ("FLOAT", {"default": 1.0, "min": 0.000001,
+                                          "max": 1e6, "step": 0.1,
+                                          "tooltip": "缩放倍数：2 放大两倍，0.5 缩小一半，1 保持尺寸。"}),
             },
             "optional": {
                 "glb_1": ("STRING", {"forceInput": True, "lazy": True}),
@@ -144,7 +144,7 @@ class BAMidFarModelAudit:
     OUTPUT_NODE = True
     DESCRIPTION = (
         "三路共用模型验收：测量尺寸/文件大小/实际三角面，整组原点归位到底部中心，"
-        "可选整组等比缩放至目标最长边，空路跳过；"
+        "三路共用缩放倍数，各自按原模型整组等比缩放，1 保持尺寸，空路跳过；"
         "先验收全部有效路再输出，保留贴图UV和天然连接。")
 
     def check_lazy_status(self, glb_1=None, glb_2=None, glb_3=None, route_report=None,
@@ -177,7 +177,7 @@ class BAMidFarModelAudit:
             min_longest_edge=0.0, max_longest_edge=0.0, max_file_mib=0.0,
             min_triangles=3000, max_triangles=5000, strict_limits=False,
             base_url="", view_endpoint="/api/view", prompt=None, unique_id=None,
-            size_mode="keep", target_longest_edge=10.0):
+            scale_factor=1.0):
         import folder_paths
         prefix, output_directory = _output_prefix(filename_prefix, folder_paths.get_output_directory())
         base_url, view_endpoint = _url_config(base_url, view_endpoint)
@@ -191,9 +191,9 @@ class BAMidFarModelAudit:
             raise ValueError("下限不能大于上限。")
         if up_axis not in ("Y", "Z") or type(bottom_origin) is not bool or type(strict_limits) is not bool:
             raise ValueError("up_axis/开关设置无效。")
-        _number(target_longest_edge, "target_longest_edge")
-        if size_mode not in ("keep", "longest_edge") or target_longest_edge == 0:
-            raise ValueError("size_mode 必须为 keep/longest_edge，目标最长边必须大于 0。")
+        if (type(scale_factor) not in (int, float) or not math.isfinite(scale_factor)
+                or scale_factor <= 0):
+            raise ValueError("scale_factor（缩放倍数）必须是有限正数；1 保持尺寸，0 无效。")
         models = (glb_1, glb_2, glb_3)
         active = _active_routes(route_report, models, prompt, unique_id)
         token = uuid.uuid4().hex[:16]
@@ -205,9 +205,8 @@ class BAMidFarModelAudit:
             "limits": {"min_longest_edge": min_longest_edge, "max_longest_edge": max_longest_edge,
                        "max_file_mib": max_file_mib, "min_triangles": min_triangles,
                        "max_triangles": max_triangles},
-            "units": "model_units", "size_mode": size_mode,
-            "target_longest_edge": target_longest_edge if size_mode == "longest_edge" else None,
-            "automatic_scaling": size_mode == "longest_edge", "outputs": [],
+            "units": "model_units", "scale_factor": scale_factor,
+            "automatic_scaling": scale_factor != 1, "outputs": [],
         }
         prepared, created, sources = [], [], set()
         failed_branch = None
@@ -224,7 +223,7 @@ class BAMidFarModelAudit:
                     raise ValueError("多路连接了同一模型文件，请检查接线。")
                 sources.add(path)
                 data, audit = process_glb(path.read_bytes(), up_axis=up_axis, bottom_origin=bottom_origin,
-                                          size_mode=size_mode, target_longest_edge=target_longest_edge)
+                                          scale_factor=scale_factor)
                 warnings = _warnings(audit, min_longest_edge, max_longest_edge, max_file_mib,
                                      min_triangles, max_triangles)
                 audit.update(branch=branch, source_glb=str(path), warnings=warnings,

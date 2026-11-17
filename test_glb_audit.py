@@ -1,6 +1,7 @@
 """Geometry acceptance tests use real GLB bytes, without a model provider."""
 import copy
 import importlib.util
+import inspect
 import json
 import math
 from pathlib import Path
@@ -188,6 +189,50 @@ class GLBAudit(unittest.TestCase):
         self.assertFalse(report["origin_applied"])
         self.assertEqual(report["pivot_after"], [4, 3, 6])
         self.assertEqual(report["longest_edge"], 4)
+
+    def test_multiplier_scales_original_dimensions_and_preserves_payload(self):
+        self.assertIn("scale_factor", inspect.signature(self.core.process_glb).parameters)
+        doc, binary = fixture(points=[(2, 3, 4), (8, 3, 4), (2, 7, 6)])
+        source = pack_glb(doc, binary)
+        before = self.core.inspect_glb(source)
+        for factor in (2.0, 0.5, 1.0):
+            with self.subTest(factor=factor):
+                output, report = self.core.process_glb(source, scale_factor=factor)
+                after = self.core.inspect_glb(output)
+                for axis, value in before["dimensions"].items():
+                    self.assertAlmostEqual(after["dimensions"][axis], value * factor)
+                self.assertEqual(report["scale_factor"], factor)
+                self.assertAlmostEqual(report["longest_edge"], 6 * factor)
+                self.assertEqual(report["ratios"], before["ratios"])
+                self.assertEqual(report["triangles"], before["triangles"])
+                self.assertEqual(after["bottom_center"], [0, 0, 0])
+                self.assertEqual(unpack_glb(output)[1], unpack_glb(source)[1])
+
+    def test_multiplier_scales_complete_hierarchy_without_moving_disabled_origin(self):
+        self.assertIn("scale_factor", inspect.signature(self.core.process_glb).parameters)
+        nodes = [{"children": [1], "translation": [10, 0, 0]},
+                 {"mesh": 0, "scale": [-2, 1, 1]},
+                 {"mesh": 0, "translation": [-10, 1, 0]}]
+        doc, binary = fixture(nodes=nodes, roots=[0, 2])
+        source = pack_glb(doc, binary)
+        before = self.core.inspect_glb(source)
+        output, report = self.core.process_glb(
+            source, scale_factor=0.5, bottom_origin=False)
+        after = self.core.inspect_glb(output)
+        for field in ("min", "max"):
+            self.assertEqual(after["bounds"][field],
+                             [v * 0.5 for v in before["bounds"][field]])
+        self.assertEqual(unpack_glb(output)[0]["nodes"][:3], nodes)
+        self.assertEqual(report["translation"], [0, 0, 0])
+        self.assertEqual(report["triangles"], 2)
+
+    def test_multiplier_rejects_zero_negative_nonfinite_and_boolean_values(self):
+        self.assertIn("scale_factor", inspect.signature(self.core.process_glb).parameters)
+        doc, binary = fixture()
+        source = pack_glb(doc, binary)
+        for factor in (0, -1, True, False, "2", None, float("nan"), float("inf")):
+            with self.subTest(factor=factor), self.assertRaises(ValueError):
+                self.core.process_glb(source, scale_factor=factor)
 
     def test_invalid_container_or_unsupported_geometry_is_rejected(self):
         doc, binary = fixture()

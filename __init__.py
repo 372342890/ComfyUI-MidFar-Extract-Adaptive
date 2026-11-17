@@ -396,5 +396,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BAMidFarAdaptivePE": "MidFar Adaptive PE / 实际1–3路提示词",
     "BAMidFarActivePrompt": "MidFar Active Prompt / 无目标路跳过生成",
     "BAMidFarAdaptivePNG": "MidFar Adaptive PNG / 实际图片查重与输出",
-    "BAMidFarModelAudit": "三路模型验收 · 尺寸检测与底部原点归位",
+    "BAMidFarModelAudit": "三路模型验收 · 倍数缩放与底部原点归位",
 }

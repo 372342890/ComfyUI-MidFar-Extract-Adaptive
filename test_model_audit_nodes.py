@@ -1,5 +1,6 @@
 """ComfyUI host contracts for lazy route selection and atomic acceptance."""
 import importlib.util
+import inspect
 import json
 from pathlib import Path
 import sys
@@ -181,6 +182,43 @@ class ModelAuditNodes(unittest.TestCase):
         self.assertFalse(report["outputs"][0]["origin_applied"])
         self.assertFalse(report["outputs"][0]["scaling_applied"])
         self.assertEqual(report["outputs"][0]["warnings"], [])
+
+    def test_only_multiplier_input_is_exposed_with_identity_default(self):
+        required = self.node.INPUT_TYPES()["required"]
+        self.assertIn("scale_factor", required)
+        self.assertEqual(required["scale_factor"][1]["default"], 1.0)
+        self.assertNotIn("size_mode", required)
+        self.assertNotIn("target_longest_edge", required)
+        self.assertEqual(self.node.RETURN_NAMES,
+                         ("glb_1", "download_url_1", "glb_2", "download_url_2",
+                          "glb_3", "download_url_3", "report"))
+
+    def test_shared_multiplier_preserves_relative_sizes_between_routes(self):
+        self.assertIn("scale_factor", inspect.signature(self.node.run).parameters)
+        source_edges = (4.0, 6.0, 8.0)
+        for i, edge in enumerate(source_edges):
+            doc, binary = fixture(points=[(0, 0, 0), (edge, 0, 0), (0, 2, 1)])
+            Path(self.paths[i]).write_bytes(pack_glb(doc, binary))
+        for factor in (2.0, 0.5, 1.0):
+            with self.subTest(factor=factor):
+                result = self.run_node(3, scale_factor=factor)["result"]
+                record = json.loads(result[-1])
+                self.assertEqual(record["scale_factor"], factor)
+                self.assertEqual([a["longest_edge"] for a in record["outputs"]],
+                                 [edge * factor for edge in source_edges])
+                for audit in record["outputs"]:
+                    self.assertEqual(audit["measured_bottom_center_after"], [0, 0, 0])
+                    self.assertTrue(audit["binary_payload_preserved"])
+
+    def test_multiplier_limits_check_final_dimensions_and_reject_invalid_input(self):
+        self.assertIn("scale_factor", inspect.signature(self.node.run).parameters)
+        with self.assertRaises(ValueError):
+            self.run_node(1, scale_factor=2.0, strict_limits=True,
+                          max_longest_edge=6.0, filename_prefix="scaled-limit/asset")
+        self.assertEqual(list((self.output / "scaled-limit").glob("*.glb")), [])
+        for factor in (0, -1, True, float("nan"), float("inf"), "2"):
+            with self.subTest(factor=factor), self.assertRaises(ValueError):
+                self.run_node(1, scale_factor=factor)
 
     def test_io_failure_cleans_partial_models(self):
         # Third file write fails after the first two completed.
