@@ -7,6 +7,8 @@
 
 按最终尺寸自动判断倍数的参数、接线和安装方式见 [model-size-plan.md](model-size-plan.md)。该模式需同时更新 `model_scale.py`、`model_scale_nodes.py` 和本验收模块。
 
+`saved_glb_path` 可以是绝对本地路径，或宿主 output 目录下的相对路径（如 `douyin3d/model.glb`）。相对路径通过 `folder_paths.get_output_directory()` 定位；验收、自动尺寸计划和缓存内容指纹保持一致。同一文件通过不同路径连接到两路时仍会拒绝。
+
 ## 安装
 
 交付包提供两种安装方式，选择一种：

@@ -1,10 +1,9 @@
 """Measure each active original GLB and choose its final uniform multiplier."""
 import hashlib
 import json
-from pathlib import Path
 
 from .glb_audit import inspect_glb
-from .model_audit_nodes import BAMidFarModelAudit, _active_routes, _blocker
+from .model_audit_nodes import BAMidFarModelAudit, _active_routes, _blocker, _model_path
 from .model_scale import calculate_size_scale, normalize_targets
 
 
@@ -57,12 +56,12 @@ class BAMidFarModelSizePlan:
         active = _active_routes(route_report, models, prompt, unique_id)
         slots, outputs, sources = [None] * 3, [], set()
         for branch in active:
-            source = models[branch - 1]
-            if not isinstance(source, str) or not source.strip():
-                raise ValueError(f"路 {branch} 缺少实际 saved_glb_path。")
-            path = Path(source).expanduser().resolve()
-            if path.suffix.lower() != ".glb" or not path.is_file() or path in sources:
-                raise ValueError(f"路 {branch} 模型路径不存在、非GLB或重复接线。")
+            try:
+                path = _model_path(models[branch - 1])
+            except ValueError as exc:
+                raise ValueError(f"路 {branch}：{exc}") from exc
+            if path in sources:
+                raise ValueError(f"路 {branch} 重复接线：多路连接了同一模型文件。")
             sources.add(path)
             data = path.read_bytes()
             decision = calculate_size_scale(inspect_glb(data, up_axis), targets)

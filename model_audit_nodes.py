@@ -16,6 +16,19 @@ def _blocker():
     return ExecutionBlocker(None)
 
 
+def _model_path(source):
+    if not isinstance(source, str) or not source.strip():
+        raise ValueError("有效路缺少真实 saved_glb_path，不能静默跳过。")
+    path = Path(source).expanduser()
+    if not path.is_absolute():
+        import folder_paths
+        path = Path(folder_paths.get_output_directory()) / path
+    path = path.resolve()
+    if path.suffix.lower() != ".glb" or not path.is_file():
+        raise ValueError("模型路径必须指向现有本地 GLB 文件。")
+    return path
+
+
 def _active_routes(route_report, models, prompt=None, unique_id=None):
     if route_report is not None and (not isinstance(route_report, str) or route_report.strip()):
         if not isinstance(route_report, str):
@@ -174,10 +187,7 @@ class BAMidFarModelAudit:
             active = _active_routes(route_report, models, prompt, unique_id)
             fingerprint = hashlib.sha256()
             for i in active:
-                path = models[i - 1]
-                if not isinstance(path, str) or not path.strip():
-                    return float("nan")
-                with Path(path).open("rb") as stream:
+                with _model_path(models[i - 1]).open("rb") as stream:
                     for chunk in iter(lambda: stream.read(1024 * 1024), b""):
                         fingerprint.update(chunk)
                 fingerprint.update(str(i).encode())
@@ -235,12 +245,7 @@ class BAMidFarModelAudit:
                 record["target_sizes"] = targets
             for branch in active:
                 failed_branch = branch
-                source = models[branch - 1]
-                if not isinstance(source, str) or not source.strip():
-                    raise ValueError("有效路缺少真实 saved_glb_path，不能静默跳过。")
-                path = Path(source).expanduser().resolve()
-                if path.suffix.lower() != ".glb" or not path.is_file():
-                    raise ValueError("模型路径必须指向现有本地 GLB 文件。")
+                path = _model_path(models[branch - 1])
                 if path in sources:
                     raise ValueError("多路连接了同一模型文件，请检查接线。")
                 sources.add(path)

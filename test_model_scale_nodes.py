@@ -127,6 +127,55 @@ class ModelSizePlanNodes(unittest.TestCase):
         after = self.plan_node.IS_CHANGED(glb_1=self.paths[0], route_report='{"active_branches":[1]}')
         self.assertNotEqual(before, after)
 
+    def use_output_relative_models(self):
+        directory = self.output / "douyin3d"
+        directory.mkdir()
+        for i, source in enumerate(self.paths):
+            target = directory / Path(source).name
+            target.write_bytes(Path(source).read_bytes())
+            self.paths[i] = target.relative_to(self.output).as_posix()
+
+    def test_generated_relative_models_plan_and_export_reach_target_size(self):
+        self.use_output_relative_models()
+        try:
+            slots = self.plan()
+            result = self.run_node(scale_plan=slots[-1])["result"]
+        except ValueError as exc:
+            self.fail(f"Generated output-relative GLBs must resolve in the host output directory: {exc}")
+        report = json.loads(result[-1])
+        for i, audit in enumerate(report["outputs"]):
+            self.assertAlmostEqual(slots[i], 10 / (2 * i + 4))
+            self.assertAlmostEqual(audit["longest_edge"], 10)
+            self.assertEqual(audit["source_glb"], str((self.output / self.paths[i]).resolve()))
+            self.assertTrue(audit["target_size_verified"])
+            self.assertTrue(audit["binary_payload_preserved"])
+
+    def test_generated_relative_fingerprint_detects_replaced_bytes(self):
+        self.use_output_relative_models()
+        for node in (self.plan_node, self.node):
+            before = node.IS_CHANGED(glb_1=self.paths[0], route_report='{"active_branches":[1]}')
+            self.assertIsInstance(before, str)
+            doc, binary = fixture(points=[(0, 0, 0), (13, 0, 0), (0, 2, 1)])
+            target = self.output / self.paths[0]
+            original = target.read_bytes()
+            target.write_bytes(pack_glb(doc, binary))
+            after = node.IS_CHANGED(glb_1=self.paths[0], route_report='{"active_branches":[1]}')
+            self.assertIsInstance(after, str)
+            self.assertNotEqual(before, after)
+            target.write_bytes(original)
+
+    def test_relative_and_absolute_aliases_reject_duplicate_route_two(self):
+        self.use_output_relative_models()
+        alias = str((self.output / self.paths[0]).resolve())
+        with self.assertRaisesRegex(ValueError, "路 2"):
+            self.plan(glb_2=alias)
+        with self.assertRaises(ValueError):
+            self.run_node(glb_2=alias, filename_prefix="aliases/asset")
+        failure = json.loads(next((self.output / "aliases").glob("*验收失败.json")).read_text())
+        self.assertEqual(failure["failed_branch"], 2)
+        self.assertIn("同一模型", failure["error"])
+        self.assertEqual(list((self.output / "aliases").glob("*.glb")), [])
+
     def test_invalid_final_measurement_is_rejected_before_any_write(self):
         slots = self.plan()
         with patch.dict(self.node.run.__globals__, {
