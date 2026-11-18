@@ -235,6 +235,57 @@ class ModelAuditNodes(unittest.TestCase):
             self.run_node(3, filename_prefix="disk/asset")
         self.assertEqual(list((self.output / "disk").glob("*.glb")), [])
 
+    def test_analysis_range_uniformly_scales_models_100_200_300(self):
+        self.assertIn("scaling_mode", inspect.signature(self.node.run).parameters)
+        options = {f"analysis_{i}": json.dumps(
+            {"scale_factor": i * 100, "faces": 4000, "scale_reason": "完整宽厚山群"})
+            for i in (1, 2, 3)}
+        slots = self.run_node(3, scaling_mode="analysis_range", **options)["result"]
+        record = json.loads(slots[-1])
+        self.assertEqual(record["scale_mode"], "analysis_range")
+        self.assertEqual(record["scale_range"], [100, 300])
+        for i, audit in enumerate(record["outputs"], 1):
+            factor = i * 100
+            self.assertEqual(audit["scale_factor"], factor)
+            self.assertEqual(audit["dimensions"], dict(width=4*factor, height=4*factor, depth=4*factor))
+            self.assertEqual(audit["measured_bottom_center_after"], [0, 0, 0])
+            self.assertEqual(audit["scale_decision"]["source"], "vision")
+            original_doc, original_chunks = unpack_glb(Path(self.paths[i-1]).read_bytes())
+            final_doc, final_chunks = unpack_glb(Path(slots[2*(i-1)]).read_bytes())
+            self.assertEqual(final_chunks, original_chunks)
+            for key in ("meshes", "materials", "images", "textures", "accessors"):
+                self.assertEqual(final_doc[key], original_doc[key])
+
+    def test_analysis_range_fallback_clamps_only_active_routes(self):
+        self.assertIn("scaling_mode", inspect.signature(self.node.run).parameters)
+        slots = self.run_node(2, scaling_mode="analysis_range",
+                              analysis_1='{"scale_factor":450}',
+                              analysis_2='{"scale_factor":NaN}',
+                              analysis_3=ExecutionBlocker(None))["result"]
+        outputs = json.loads(slots[-1])["outputs"]
+        self.assertEqual([a["scale_factor"] for a in outputs], [300, 200])
+        self.assertEqual([a["scale_decision"]["source"] for a in outputs], ["clamped", "fallback"])
+        self.assertEqual(self.run_node(0, scaling_mode="analysis_range")["result"][-1].count(
+            '"processed_count": 0'), 1)
+
+    def test_analysis_lazy_requests_only_active_linked_analysis(self):
+        self.assertIn("scaling_mode", inspect.signature(self.node.run).parameters)
+        prompt = {"32": {"inputs": {"analysis_1": ["9", 0], "analysis_3": ["21", 0]}}}
+        missing = self.node.check_lazy_status(
+            glb_1=self.paths[0], route_report='{"active_branches":[1]}',
+            prompt=prompt, unique_id="32", scaling_mode="analysis_range")
+        self.assertEqual(missing, ["analysis_1"])
+
+    def test_analysis_mode_rejects_old_size_plan_and_factor_connections(self):
+        self.assertIn("scaling_mode", inspect.signature(self.node.run).parameters)
+        for options in ({"scale_plan": "{}"}, {"scale_factor_1": 10},
+                        {"prompt": {"32": {"inputs": {"scale_plan": ["34", 3]}}},
+                         "unique_id": "32"}):
+            with self.subTest(options=options), self.assertRaises(ValueError):
+                self.run_node(1, scaling_mode="analysis_range",
+                              filename_prefix="conflict/asset", **options)
+        self.assertEqual(list(self.output.rglob("*.glb")), [])
+
 
 if __name__ == "__main__":
     unittest.main()

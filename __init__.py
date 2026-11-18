@@ -26,6 +26,7 @@ from .five_quality_nodes import (
 from .recognition_nodes import BAMidFarRecognitionContext, BAMidFarRecognitionFinal
 from .model_audit_nodes import BAMidFarModelAudit
 from .model_scale_nodes import BAMidFarModelSizePlan
+from .model_parameter_nodes import BAMidFarFaceCountFromAnalysis
 
 
 class BAMidFarPlanPrompt:
@@ -348,6 +349,7 @@ NODE_CLASS_MAPPINGS = {
     "BAMidFarAdaptivePNG": BAMidFarAdaptivePNG,
     "BAMidFarModelAudit": BAMidFarModelAudit,
     "BAMidFarModelSizePlan": BAMidFarModelSizePlan,
+    "BAMidFarFaceCountFromAnalysis": BAMidFarFaceCountFromAnalysis,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "BAMidFarJSONValue": "当前验收JSON输入 · 严格解析且无模型调用",
@@ -400,4 +402,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BAMidFarAdaptivePNG": "MidFar Adaptive PNG / 实际图片查重与输出",
     "BAMidFarModelAudit": "三路模型验收 · 倍数缩放与底部原点归位",
     "BAMidFarModelSizePlan": "三路尺寸判断 · 自动缩放倍数",
+    "BAMidFarFaceCountFromAnalysis": "分析转面数 · 独立读取faces",
 }

@@ -9,6 +9,7 @@ import uuid
 
 from .glb_audit import process_glb
 from .model_scale import parse_size_plan, verify_size_plan_item, verify_final_size
+from .model_parameters import scale_decision, validate_scale_range
 
 
 def _blocker():
@@ -140,6 +141,9 @@ class BAMidFarModelAudit:
                 "scale_factor": ("FLOAT", {"default": 1.0, "min": 0.000001,
                                           "max": 1e6, "step": 0.1,
                                           "tooltip": "缩放倍数：2 放大两倍，0.5 缩小一半，1 保持尺寸。"}),
+                "scaling_mode": (["manual", "analysis_range"], {"default": "manual"}),
+                "min_scale_factor": ("FLOAT", {"default": 100.0, "min": 0.000001, "max": 1e6}),
+                "max_scale_factor": ("FLOAT", {"default": 300.0, "min": 0.000001, "max": 1e6}),
             },
             "optional": {
                 "glb_1": ("STRING", {"forceInput": True, "lazy": True}),
@@ -150,6 +154,8 @@ class BAMidFarModelAudit:
                 "scale_factor_2": ("FLOAT", {"forceInput": True, "lazy": True}),
                 "scale_factor_3": ("FLOAT", {"forceInput": True, "lazy": True}),
                 "scale_plan": ("STRING", {"forceInput": True, "lazy": True}),
+                **{f"analysis_{i}": ("STRING", {"forceInput": True, "lazy": True})
+                   for i in (1, 2, 3)},
             },
             "hidden": {"prompt": "PROMPT", "unique_id": "UNIQUE_ID"},
         }
@@ -162,7 +168,8 @@ class BAMidFarModelAudit:
     OUTPUT_NODE = True
     DESCRIPTION = (
         "三路共用模型验收：测量尺寸/文件大小/实际三角面，整组原点归位到底部中心，"
-        "接入自动尺寸节点时逐路核验倍率并等比缩放；无接入时使用手动倍数，空路跳过；"
+        "范围模式读取现有图片分析的倍数建议，整体等比缩放；缺失时取范围中点并记录；"
+        "手动模式兼容原接线，空路跳过；"
         "先验收全部有效路再输出，保留贴图UV和天然连接。")
 
     def check_lazy_status(self, glb_1=None, glb_2=None, glb_3=None, route_report=None,
@@ -173,7 +180,9 @@ class BAMidFarModelAudit:
         if isinstance(prompt, dict) and unique_id is not None:
             entry = prompt.get(str(unique_id), prompt.get(unique_id, {}))
             inputs = entry.get("inputs", {}) if isinstance(entry, dict) else {}
-            for name in [f"scale_factor_{i}" for i in active] + ["scale_plan"]:
+            names = ([f"analysis_{i}" for i in active] if kwargs.get("scaling_mode") == "analysis_range"
+                     else [f"scale_factor_{i}" for i in active] + ["scale_plan"])
+            for name in names:
                 link = inputs.get(name)
                 if isinstance(link, list) and len(link) == 2 and kwargs.get(name) is None:
                     missing.append(name)
@@ -201,7 +210,8 @@ class BAMidFarModelAudit:
             min_triangles=3000, max_triangles=5000, strict_limits=False,
             base_url="", view_endpoint="/api/view", prompt=None, unique_id=None,
             scale_factor=1.0, scale_factor_1=None, scale_factor_2=None, scale_factor_3=None,
-            scale_plan=None):
+            scale_plan=None, scaling_mode="manual", min_scale_factor=100.0, max_scale_factor=300.0,
+            analysis_1=None, analysis_2=None, analysis_3=None):
         import folder_paths
         prefix, output_directory = _output_prefix(filename_prefix, folder_paths.get_output_directory())
         base_url, view_endpoint = _url_config(base_url, view_endpoint)
@@ -220,6 +230,18 @@ class BAMidFarModelAudit:
             raise ValueError("scale_factor（缩放倍数）必须是有限正数；1 保持尺寸，0 无效。")
         models = (glb_1, glb_2, glb_3)
         factors = (scale_factor_1, scale_factor_2, scale_factor_3)
+        analyses = (analysis_1, analysis_2, analysis_3)
+        if scaling_mode not in ("manual", "analysis_range"):
+            raise ValueError("缩放模式必须是 manual 或 analysis_range。")
+        if scaling_mode == "analysis_range":
+            validate_scale_range(min_scale_factor, max_scale_factor)
+            entry = prompt.get(str(unique_id), prompt.get(unique_id, {})) if isinstance(prompt, dict) else {}
+            inputs = entry.get("inputs", {}) if isinstance(entry, dict) else {}
+            old_names = ["scale_plan"] + [f"scale_factor_{i}" for i in (1, 2, 3)]
+            if (scale_plan is not None or any(value is not None for value in factors)
+                    or any(isinstance(inputs.get(name), list) and len(inputs[name]) == 2
+                           for name in old_names)):
+                raise ValueError("范围倍数模式不能同时连接旧目标尺寸计划或逐路倍数，请删除旧接线。")
         active = _active_routes(route_report, models, prompt, unique_id)
         token = uuid.uuid4().hex[:16]
         stem = prefix.with_name(prefix.name + "_" + token)
@@ -232,11 +254,14 @@ class BAMidFarModelAudit:
                        "max_triangles": max_triangles},
             "units": "model_units", "scale_factor": scale_factor,
             "automatic_scaling": False,
-            "scale_mode": "target_size" if scale_plan is not None else
+            "scale_mode": "analysis_range" if scaling_mode == "analysis_range" else
+                          "target_size" if scale_plan is not None else
                           ("per_route_multiplier" if any(factors[i-1] is not None for i in active)
                            else "shared_multiplier"),
             "outputs": [],
         }
+        if scaling_mode == "analysis_range":
+            record["scale_range"] = [min_scale_factor, max_scale_factor]
         prepared, created, sources = [], [], set()
         failed_branch = None
         try:
@@ -252,7 +277,12 @@ class BAMidFarModelAudit:
                 source_data = path.read_bytes()
                 item = plan_items.get(branch)
                 factor = factors[branch - 1]
-                if factor is None:
+                multiplier_decision = None
+                if scaling_mode == "analysis_range":
+                    multiplier_decision = scale_decision(
+                        analyses[branch - 1], min_scale_factor, max_scale_factor)
+                    factor = multiplier_decision["scale_factor"]
+                elif factor is None:
                     factor = item.get("scale_factor") if item is not None else scale_factor
                 if type(factor) not in (int, float) or not math.isfinite(factor) or factor <= 0:
                     raise ValueError(f"路 {branch} 的缩放倍数必须是有限正数。")
@@ -269,6 +299,10 @@ class BAMidFarModelAudit:
                     audit["target_sizes"] = targets
                 warnings = _warnings(audit, min_longest_edge, max_longest_edge, max_file_mib,
                                      min_triangles, max_triangles)
+                if multiplier_decision is not None:
+                    audit["scale_decision"] = multiplier_decision
+                    if multiplier_decision["source"] != "vision":
+                        warnings.append(multiplier_decision["reason"])
                 audit.update(branch=branch, source_glb=str(path), warnings=warnings,
                              status="warning" if warnings else "success")
                 record["outputs"].append(audit)
