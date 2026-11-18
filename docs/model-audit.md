@@ -3,14 +3,16 @@
 节点键：`BAMidFarModelAudit`
 显示名称：**三路模型验收 · 倍数缩放与底部原点归位**
 
-一个节点接收实际 0–3 路 GLB，输出每路验收后的模型路径、下载链接和统一 JSON 报告。只使用 `scale_factor`（缩放倍数）整组等比缩放，随后归位到底部中心。默认倍数 `1`；不拆分连体山群、不压平峰顶、不增加底座，也不重写几何、UV、法线或贴图。
+一个节点接收实际 0–3 路 GLB，输出每路验收后的模型路径、下载链接和统一 JSON 报告。使用缩放倍数整组等比缩放，随后归位到底部中心。默认手动倍数 `1`；接入新增的自动尺寸节点时，分别使用三路计算出的倍率。不会拆分连体山群或重写几何、UV、法线及贴图。
+
+按最终尺寸自动判断倍数的参数、接线和安装方式见 [model-size-plan.md](model-size-plan.md)。该模式需同时更新 `model_scale.py`、`model_scale_nodes.py` 和本验收模块。
 
 ## 安装
 
 交付包提供两种安装方式，选择一种：
 
 1. **独立安装**：将 `ComfyUI-MidFar-Model-Audit/` 放入宿主的 `ComfyUI/custom_nodes/`，重启服务。这个独立节点只使用 Python 标准库，无新增 pip 依赖；宿主须支持 ComfyUI 的 lazy 输入和 `ExecutionBlocker`。
-2. **更新本次对应的原插件**：将 `原插件增量更新/` 中的 `glb_audit.py`、`model_audit_nodes.py` 和 `__init__.py` 覆盖到 `ComfyUI-MidFar-Extract-Adaptive/`，重启服务。该 `__init__.py` 对应本次本地插件副本；其他版本可只复制两个新模块，然后手动注册下列内容。
+2. **更新原插件**：将 `原插件增量更新/` 中四个模块 `glb_audit.py`、`model_audit_nodes.py`、`model_scale.py`、`model_scale_nodes.py` 复制到 `ComfyUI-MidFar-Extract-Adaptive/`，按 `model-size-plan.md` 注册尺寸判断节点，重启服务。保持现有 `__init__.py` 的其他注册项。如果尚未注册验收节点，再加入下列内容。
 
 ```python
 # 顶部导入
@@ -20,12 +22,12 @@ from .model_audit_nodes import BAMidFarModelAudit
 "BAMidFarModelAudit": BAMidFarModelAudit,
 
 # NODE_DISPLAY_NAME_MAPPINGS 内加入
-"BAMidFarModelAudit": "三路模型验收 · 尺寸检测与底部原点归位",
+"BAMidFarModelAudit": "三路模型验收 · 倍数缩放与底部原点归位",
 ```
 
 同一宿主只注册一次这个节点键。导入 JSON 只会建立画布节点，必须先安装 Python 插件。
 
-`三路模型验收-单节点.byteartist.json` 为 ByteArtist 单节点模板；`三路模型验收-单节点.comfyui.json` 为标准 ComfyUI 单节点模板。将节点复制进现有画布再接线。单节点模板没有模型路径，也没有生成任务或认证信息。
+本次提供 `尺寸判断与验收-双节点.byteartist.json` 和 `尺寸判断与验收-双节点.comfyui.json`。两个节点间的倍率及报告已连接；导入后仍需接入原模型路径与图片检查报告。双节点模板不含上游生成任务或认证信息。
 
 ## 调整模型大小
 
